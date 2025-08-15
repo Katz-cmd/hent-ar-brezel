@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hent Ar Brezel - French Tactical Apparel Landing Page</title>
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Hent Ar Brezel - French Tactical Apparel" />
+    <meta property="og:description" content="Vêtements tactiques inspirés des unités d'élite françaises. Collection Neon Units - Qualité premium, design authentique." />
+    <meta property="og:image" content="/655b4f8fbe94a9ab563f377b20e38a51_edited.jpg" />
+    <meta property="og:url" content="https://hentarbrezel.com" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Hent Ar Brezel" />
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Hent Ar Brezel - French Tactical Apparel" />
+    <meta name="twitter:description" content="Vêtements tactiques inspirés des unités d'élite françaises. Collection Neon Units - Qualité premium, design authentique." />
+    <meta name="twitter:image" content="/655b4f8fbe94a9ab563f377b20e38a51_edited.jpg" />
+    
+    <!-- ⚙️ Step 1: Global Functions Declaration (MUST BE FIRST) -->
+    <script>
+    // ✅ Attach to window immediately
+    window.getCookie = function(name) {
+      try {
+        const value = (document.cookie.match('(^|;)\\s*' + name + '=([^;]+)') || [])[2] || null;
+        console.log(`🍪 getCookie(${name}):`, value ? 'Found' : 'Not found', value);
+        return value;
+      } catch (error) {
+        console.error(`❌ Error reading cookie ${name}:`, error);
+        return null;
+      }
+    };
+
+    // Enhanced cookie reading with multiple fallback methods
+    window.getAllCookies = function() {
+      try {
+        console.log('🔍 Full document.cookie:', document.cookie);
+        const cookies = {};
+        if (document.cookie) {
+          document.cookie.split(';').forEach(cookie => {
+            const [name, value] = cookie.trim().split('=');
+            if (name && value) {
+              cookies[name] = value;
+            }
+          });
+        }
+        return cookies;
+      } catch (error) {
+        console.error('❌ Error reading all cookies:', error);
+        return {};
+      }
+    };
+
+    // Alternative cookie reading method
+    window.getFacebookCookiesAlternative = function() {
+      try {
+        const allCookies = window.getAllCookies();
+        console.log('🍪 All cookies found:', allCookies);
+        
+        // Try multiple approaches to find Facebook cookies
+        const fbcCookie = allCookies['_fbc'] || window.getCookie('_fbc') || null;
+        const fbpCookie = allCookies['_fbp'] || window.getCookie('_fbp') || null;
+        
+        console.log('🎯 Facebook cookies detected:', {
+          _fbc: fbcCookie ? 'Present' : 'Missing',
+          _fbp: fbpCookie ? 'Present' : 'Missing'
+        });
+        
+        return { fbc: fbcCookie, fbp: fbpCookie };
+      } catch (error) {
+        console.error('❌ Alternative cookie reading failed:', error);
+        return { fbc: null, fbp: null };
+      }
+    };
+
+    window.captureFacebookCookies = function() {
+      try {
+        console.log('🔍 Attempting to capture Facebook cookies...');
+        console.log('📋 Current document.cookie:', document.cookie);
+        console.log('📋 Document.cookie length:', document.cookie.length);
+        console.log('📋 Cookie access test:', typeof document.cookie);
+        
+        // Try primary method
+        let fbcCookie = window.getCookie('_fbc');
+        let fbpCookie = window.getCookie('_fbp');
+        
+        // If primary method fails, try alternative
+        if (!fbcCookie || !fbpCookie) {
+          console.log('🔄 Primary cookie reading failed, trying alternative method...');
+          const altCookies = window.getFacebookCookiesAlternative();
+          fbcCookie = fbcCookie || altCookies.fbc;
+          fbpCookie = fbpCookie || altCookies.fbp;
+        }
+
+        console.log('🍪 Raw cookie values:', {
+          _fbc: fbcCookie,
+          _fbp: fbpCookie
+        });
+        
+        // Enhanced localStorage writing with verification
+        if (fbcCookie) localStorage.setItem('fbc', fbcCookie);
+        if (fbpCookie) localStorage.setItem('fbp', fbpCookie);
+        
+        // Verify localStorage write was successful
+        const storedFbc = localStorage.getItem('fbc');
+        const storedFbp = localStorage.getItem('fbp');
+        
+        console.log('💾 localStorage verification:', {
+          fbc_written: fbcCookie ? 'Yes' : 'No',
+          fbc_stored: storedFbc ? 'Yes' : 'No',
+          fbp_written: fbpCookie ? 'Yes' : 'No',
+          fbp_stored: storedFbp ? 'Yes' : 'No'
+        });
+
+        console.log('✅ Cookies captured:', {
+          fbc: storedFbc,
+          fbp: storedFbp
+        });
+        
+        return {
+          fbc: storedFbc,
+          fbp: storedFbp,
+          success: !!(fbcCookie || fbpCookie)
+        };
+      } catch (error) {
+        console.error('❌ captureFacebookCookies error:', error);
+        return { fbc: null, fbp: null, success: false };
+      }
+    };
+    
+    // Periodic cookie monitoring
+    window.monitorFacebookCookies = function() {
+      setInterval(() => {
+        const cookies = window.getFacebookCookiesAlternative();
+        if (cookies.fbc || cookies.fbp) {
+          console.log('🔄 Periodic check - Facebook cookies detected:', cookies);
+          if (cookies.fbc && !localStorage.getItem('fbc')) {
+            localStorage.setItem('fbc', cookies.fbc);
+            console.log('💾 Late _fbc cookie captured and stored');
+          }
+          if (cookies.fbp && !localStorage.getItem('fbp')) {
+            localStorage.setItem('fbp', cookies.fbp);
+            console.log('💾 Late _fbp cookie captured and stored');
+          }
+        }
+      }, 5000); // Check every 5 seconds
+    };
+
+    // Immediate test (verifies declaration)
+    console.log('🧪 Global functions ready:', {
+      getCookie: typeof window.getCookie,
+      captureFacebookCookies: typeof window.captureFacebookCookies,
+      getAllCookies: typeof window.getAllCookies,
+      getFacebookCookiesAlternative: typeof window.getFacebookCookiesAlternative,
+      monitorFacebookCookies: typeof window.monitorFacebookCookies
+    });
+    </script>
+
+    <!-- ⚙️ Step 2: Single Facebook Pixel Loading (LOAD EXACTLY ONCE) -->
+    <script>
+    // Prevent multiple pixel loading
+    if (!window.fbPixelLoaded) {
+      window.fbPixelLoaded = true;
+      console.log('🎯 Loading Facebook Pixel (first time only)...');
+      
+      // Standard Meta Pixel Code
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    
+    // Initialize the pixel
+    fbq('init', '1452655989058364');
+    
+    // Track the initial page view
+    fbq('track', 'PageView');
+    } else {
+      console.log('🚫 Facebook Pixel already loaded, skipping duplicate load');
+    }
+    
+    console.log('🔧 Facebook Pixel wrapper active - all events include user data');
+    
+    // Verify pixel loading and capture cookies
+    setTimeout(function() {
+      if (typeof fbq === 'undefined' || !window.fbq) {
+        console.warn('⚠️ Facebook Pixel failed to load, using fallback');
+        var img = new Image();
+        img.src = 'https://www.facebook.com/tr?id=1452655989058364&ev=PageView&noscript=1';
+        img.style.display = 'none';
+        document.body.appendChild(img);
+      } else {
+        console.log('✅ Facebook Pixel loaded successfully');
+        
+        // Capture cookies after pixel loads
+        if (typeof window.captureFacebookCookies === 'function') {
+          console.log('🍪 Initial cookie capture...');
+          const initialCapture = window.captureFacebookCookies();
+          
+          // Retry cookie capture after 2 seconds (cookies may be set by pixel)
+          setTimeout(() => {
+            console.log('🍪 Delayed cookie capture (after pixel initialization)...');
+            const delayedCapture = window.captureFacebookCookies();
+            
+            // Start periodic monitoring for late-arriving cookies
+            if (typeof window.monitorFacebookCookies === 'function') {
+              console.log('🔄 Starting periodic cookie monitoring...');
+              window.monitorFacebookCookies();
+            }
+            
+            console.log('📊 Cookie capture summary:', {
+              initial: initialCapture,
+              delayed: delayedCapture,
+              finalState: {
+                fbc: localStorage.getItem('fbc'),
+                fbp: localStorage.getItem('fbp')
+              }
+            });
+          }, 2000);
+          
+          // Additional capture attempts at longer intervals
+          setTimeout(() => {
+            console.log('🍪 Extended cookie capture (5s delay)...');
+            window.captureFacebookCookies();
+          }, 5000);
+          
+          setTimeout(() => {
+            console.log('🍪 Final cookie capture attempt (10s delay)...');
+            window.captureFacebookCookies();
+          }, 10000);
+        } else {
+          console.error("❌ window.captureFacebookCookies not available in Meta Pixel Code");
+        }
+      }
+    }, 1000);
+    
+    </script>
+
+    <!-- ⚙️ Step 3: Facebook Pixel Wrapper with User Data (AFTER Step 2) -->
+    <script>
+    // Facebook Pixel Wrapper adjustment
+    (function(originalFbq){
+      // Event deduplication tracking
+      window.trackedEvents = window.trackedEvents || new Set();
+
+      // SHA-256 hash helper (unchanged)
+      const sha256 = str => crypto.subtle.digest(
+        "SHA-256", new TextEncoder().encode(str)
+      ).then(buf => [...new Uint8Array(buf)]
+        .map(b => b.toString(16).padStart(2, "0")).join(""));
+
+      // Override fbq (unchanged)
+      window.fbq = async function(cmd, ev, p = {}) {
+        // Generate unique event identifier for deduplication
+        const eventKey = `${ev}_${JSON.stringify(p.content_ids || [])}_${p.value || 0}`;
+        
+        // Check if this exact event was already tracked
+        if (window.trackedEvents.has(eventKey)) {
+          console.log(`🚫 Event already tracked, skipping: ${ev}`, eventKey);
+          return;
+        }
+        
+        // Mark this event as tracked
+        window.trackedEvents.add(eventKey);
+
+        // Retrieve hashed data from localStorage
+        const hashedEmail = localStorage.getItem("hashedEmail");
+        const hashedPhone = localStorage.getItem("hashedPhone");
+        const fbc = localStorage.getItem("fbc");
+        const fbp = localStorage.getItem("fbp");
+
+        // Include user data if present
+        p.user_data = {
+          ...(hashedEmail && { em: hashedEmail }),
+          ...(hashedPhone && { ph: hashedPhone }),
+          ...(fbc && { fbc }),
+          ...(fbp && { fbp })
+        };
+
+        // Unique event ID
+        p.event_id = Date.now().toString() + Math.random().toString().slice(2);
+
+        // --- Client-side Facebook Pixel Event ---
+        originalFbq(cmd, ev, p);
+        console.log(`✅ Facebook Pixel: ${ev} tracked (deduplicated)`, {
+          ...p,
+          eventKey: eventKey,
+          user_data_included: {
+            hashedEmail: !!hashedEmail,
+            hashedPhone: !!hashedPhone,
+            fbc: !!fbc,
+            fbp: !!fbp
+          }
+        });
+
+        // --- Server-side Conversions API Call to Cloudflare Worker ---
+        try {
+          const capiPayload = {
+            data: [{
+              event_name: ev,
+              event_time: Math.floor(Date.now() / 1000), // Unix timestamp in seconds
+              action_source: 'website',
+              event_source_url: window.location.href,
+              user_data: p.user_data,
+              custom_data: { ...p }, // Copy all properties from p to custom_data
+              event_id: p.event_id,
+            }]
+          };
+          // Remove user_data, event_id, and internal keys from custom_data as they are top-level CAPI fields
+          delete capiPayload.data[0].custom_data.user_data;
+          delete capiPayload.data[0].custom_data.event_id;
+          delete capiPayload.data[0].custom_data.eventKey; // Internal deduplication key
+
+          console.log(`🚀 Sending CAPI event to worker for ${ev} with event_id: ${p.event_id}`);
+          console.log('CAPI Payload:', JSON.stringify(capiPayload, null, 2));
+
+          const response = await fetch('https://capiworker.elhallaoui-mohamed1.workers.dev', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(capiPayload),
+          });
+
+          if (response.ok) {
+            const responseData = await response.json();
+            console.log(`✅ CAPI Worker response for ${ev}:`, responseData);
+          } else {
+            const errorText = await response.text();
+            console.error(`❌ CAPI Worker error for ${ev} (Status: ${response.status}):`, errorText);
+          }
+        } catch (error) {
+          console.error(`❌ Failed to send CAPI event for ${ev} to worker:`, error);
+        }
+      };
+    })(window.fbq || function(){});
+    </script>
+
+    <!-- ⚙️ Step 4: Enhanced Product Page Tracking -->
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const path = window.location.pathname;
+
+        const eventMap = {
+          "/product/price_1RYQhID3hdzeARaV86yI6lOw": {
+            name: "ViewWhiteHoodiePage",
+            data: { product_name: "White Hoodie", product_id: "BRZ-H002", category: "Hoodie" }
+          },
+          "/product/price_1RYTLJD3hdzeARaVPyImkzCS": {
+            name: "ViewBlueHoodiePage",
+            data: { product_name: "Blue Hoodie", product_id: "BRZ-H003", category: "Hoodie" }
+          },
+          "/product/price_1RYTMiD3hdzeARaVApuZgd0K": {
+            name: "ViewRedHoodiePage",
+            data: { product_name: "Red Hoodie", product_id: "BRZ-H001", category: "Hoodie" }
+          },
+          "/product/price_1RYTILD3hdzeARaVLdV8GKsK": {
+            name: "ViewRedTShirtPage",
+            data: { product_name: "Red T-Shirt", product_id: "BRZ-T001", category: "T-Shirt" }
+          },
+          "/product/price_1RYTFJD3hdzeARaV815G4LfJ": {
+            name: "ViewWhiteTShirtPage",
+            data: { product_name: "White T-Shirt", product_id: "BRZ-T002", category: "T-Shirt" }
+          },
+          "/product/price_1RYTFtD3hdzeARaVFK20gVjq": {
+            name: "ViewBlueTShirtPage",
+            data: { product_name: "Blue T-Shirt", product_id: "BRZ-T003", category: "T-Shirt" }
+          }
+        };
+
+        const match = eventMap[path];
+        if (match) {
+          if (typeof fbq !== 'undefined') {
+            fbq('trackCustom', match.name, match.data);
+            console.log('✅ Facebook Pixel: Product page event tracked -', match.name, match.data);
+          }
+        }
+      });
+    </script>
+
+    <!-- ⚙️ Step 5: Final Verification -->
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      setTimeout(() => {
+        // Enhanced verification with cookie diagnostics
+        console.log('🧪 Final system verification:', {
+          pixelLoaded: !!window.fbPixelLoaded,
+          fbqAvailable: typeof window.fbq,
+          captureFunctionAvailable: typeof window.captureFacebookCookies,
+          documentCookieAccess: typeof document.cookie,
+          documentCookieContent: document.cookie,
+          documentCookieLength: document.cookie.length,
+          cookiesInLocalStorage: {
+            fbc: localStorage.getItem('fbc'),
+            fbp: localStorage.getItem('fbp')
+          },
+          trackedEventsCount: window.trackedEvents ? window.trackedEvents.size : 0,
+          allCookiesFound: window.getAllCookies ? window.getAllCookies() : 'Function not available'
+        });
+        
+        // Final cookie capture attempt
+        if (typeof window.captureFacebookCookies === 'function') {
+          console.log('🍪 Final cookie capture verification...');
+          const finalCapture = window.captureFacebookCookies();
+          console.log('📋 Final cookie capture result:', finalCapture);
+          
+          // If still no cookies, try alternative method
+          if (!finalCapture.success && typeof window.getFacebookCookiesAlternative === 'function') {
+            console.log('🔄 Trying alternative cookie detection...');
+            const altResult = window.getFacebookCookiesAlternative();
+            if (altResult.fbc) localStorage.setItem('fbc', altResult.fbc);
+            if (altResult.fbp) localStorage.setItem('fbp', altResult.fbp);
+            console.log('🔄 Alternative method result:', altResult);
+          }
+        }
+      }, 3000);
+    });
+    </script>
+
+    <script type="module" crossorigin src="/assets/index-dckquwlz.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-ypvo4vrl.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
