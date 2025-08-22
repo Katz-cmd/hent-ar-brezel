@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HentArBrezel.com Event Quality Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #1877f2;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #65676b;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        
+        .info-card {
+            background: #f0f2f5;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .info-card h3 {
+            color: #1c1e21;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .check-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e4e6eb;
+        }
+        
+        .check-item:last-child {
+            border-bottom: none;
+        }
+        
+        .check-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 12px;
+            font-size: 18px;
+        }
+        
+        .check-label {
+            flex: 1;
+            color: #1c1e21;
+        }
+        
+        .check-value {
+            color: #65676b;
+            font-size: 14px;
+        }
+        
+        .action-section {
+            background: #e3f2fd;
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .action-section h3 {
+            color: #1877f2;
+            margin-bottom: 15px;
+        }
+        
+        .btn-primary {
+            background: #1877f2;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px 5px;
+        }
+        
+        .btn-primary:hover {
+            background: #166fe5;
+        }
+        
+        .btn-secondary {
+            background: #42b883;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px 5px;
+        }
+        
+        .btn-secondary:hover {
+            background: #35a372;
+        }
+        
+        .instructions {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .instructions h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        
+        .instructions ol {
+            margin-left: 20px;
+            color: #856404;
+        }
+        
+        .instructions li {
+            margin: 8px 0;
+        }
+        
+        .bookmarklet-container {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .bookmarklet-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            display: inline-block;
+            cursor: move;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .bookmarklet-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+        
+        code {
+            background: #f1f3f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+        }
+        
+        .warning {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 HentArBrezel.com Event Quality Monitor</h1>
+        <p class="subtitle">Check your Facebook Pixel data quality without modifying your website</p>
+        
+        <div class="info-card">
+            <h3>📊 What This Tool Checks</h3>
+            <div class="check-item">
+                <span class="check-icon">📧</span>
+                <span class="check-label">Email Collection</span>
+                <span class="check-value">Worth 1.5 points</span>
+            </div>
+            <div class="check-item">
+                <span class="check-icon">📱</span>
+                <span class="check-label">Phone Collection</span>
+                <span class="check-value">Worth 1.5 points</span>
+            </div>
+            <div class="check-item">
+                <span class="check-icon">🍪</span>
+                <span class="check-label">Facebook Cookies (_fbp, _fbc)</span>
+                <span class="check-value">Worth 3 points total</span>
+            </div>
+            <div class="check-item">
+                <span class="check-icon">🆔</span>
+                <span class="check-label">User ID (External ID)</span>
+                <span class="check-value">Worth 1.5 points</span>
+            </div>
+            <div class="check-item">
+                <span class="check-icon">👤</span>
+                <span class="check-label">User Details (Name, Location)</span>
+                <span class="check-value">Worth up to 2.5 points</span>
+            </div>
+        </div>
+        
+        <div class="bookmarklet-container">
+            <h3 style="margin-bottom: 15px;">🚀 Quick Check Tool (No Installation Needed)</h3>
+            <p style="margin-bottom: 15px;">Drag this button to your bookmarks bar:</p>
+            <a href="javascript:(function(){if(window.location.hostname!=='hentarbrezel.com'){if(!confirm('You are not on hentarbrezel.com. Check this site anyway?'))return;}var s=document.createElement('script');s.innerHTML=`(function(){if(window.EMQ_ACTIVE){return;}window.EMQ_ACTIVE=true;const st=document.createElement('style');st.innerHTML='#emq-popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:450px;background:white;border-radius:15px;box-shadow:0 10px 40px rgba(0,0,0,0.3);z-index:999999;font-family:system-ui,sans-serif;}#emq-header{background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:20px;border-radius:15px 15px 0 0;position:relative;}#emq-close{position:absolute;right:15px;top:15px;background:rgba(255,255,255,0.2);border:none;color:white;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:20px;}#emq-close:hover{background:rgba(255,255,255,0.3);}#emq-body{padding:25px;}.emq-score{text-align:center;margin:20px 0;}.emq-circle{width:120px;height:120px;border-radius:50%;margin:0 auto 15px;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:bold;color:white;}.score-excellent{background:#16a085;}.score-good{background:#27ae60;}.score-fair{background:#f39c12;}.score-poor{background:#e74c3c;}.emq-params{margin:20px 0;}.emq-param{display:flex;justify-content:space-between;padding:10px;background:#f8f9fa;margin:5px 0;border-radius:6px;align-items:center;}.emq-param.yes{background:#d4edda;}.emq-param.no{background:#f8d7da;}.emq-info{background:#e3f2fd;padding:15px;border-radius:8px;margin-top:20px;font-size:13px;color:#0c5460;}';document.head.appendChild(st);function getCookie(n){const v='; '+document.cookie;const p=v.split('; '+n+'=');return p.length===2?p.pop().split(';')[0]:null;}function check(){const d={em:localStorage.getItem('user_email')||localStorage.getItem('user_email_hash'),ph:localStorage.getItem('user_phone')||localStorage.getItem('user_phone_hash'),fbp:getCookie('_fbp'),fbc:getCookie('_fbc'),id:localStorage.getItem('user_id')||localStorage.getItem('external_id'),fn:localStorage.getItem('user_fn'),ln:localStorage.getItem('user_ln')};let s=0;if(d.em)s+=1.5;if(d.ph)s+=1.5;if(d.fbp)s+=1.5;if(d.fbc)s+=1.5;if(d.id)s+=1.5;if(d.fn)s+=0.4;if(d.ln)s+=0.4;s=Math.min(10,s);return{score:s.toFixed(1),data:d};}const r=check();let sc='score-poor',st='Poor';if(r.score>=8.5){sc='score-excellent';st='Excellent';}else if(r.score>=7){sc='score-good';st='Good';}else if(r.score>=5){sc='score-fair';st='Fair';}const p=document.createElement('div');p.id='emq-popup';p.innerHTML='<div id=\"emq-header\"><h2 style=\"margin:0;\">Event Match Quality Check</h2><button id=\"emq-close\">×</button></div><div id=\"emq-body\"><div class=\"emq-score\"><div class=\"emq-circle '+sc+'\">'+r.score+'/10</div><strong>'+st+' Data Quality</strong></div><div class=\"emq-params\"><div class=\"emq-param '+(r.data.em?'yes':'no')+'\"><span>📧 Email</span><span>'+(r.data.em?'✅ Collected':'❌ Missing')+'</span></div><div class=\"emq-param '+(r.data.ph?'yes':'no')+'\"><span>📱 Phone</span><span>'+(r.data.ph?'✅ Collected':'❌ Missing')+'</span></div><div class=\"emq-param '+(r.data.fbp?'yes':'no')+'\"><span>🍪 FB Browser ID</span><span>'+(r.data.fbp?'✅ Present':'❌ Missing')+'</span></div><div class=\"emq-param '+(r.data.fbc?'yes':'no')+'\"><span>🔗 FB Click ID</span><span>'+(r.data.fbc?'✅ Present':'❌ Missing')+'</span></div><div class=\"emq-param '+(r.data.id?'yes':'no')+'\"><span>🆔 User ID</span><span>'+(r.data.id?'✅ Set':'❌ Missing')+'</span></div></div><div class=\"emq-info\"><strong>Site:</strong> '+window.location.hostname+'<br><strong>Facebook Pixel:</strong> '+(typeof fbq!=='undefined'?'✅ Loaded':'❌ Not Found')+'<br><strong>Target Score:</strong> 7.0+ for good performance<br><strong>Your Score:</strong> '+r.score+'/10</div></div>';document.body.appendChild(p);document.getElementById('emq-close').onclick=function(){p.remove();st.remove();window.EMQ_ACTIVE=false;};})()`;document.body.appendChild(s);})();" class="bookmarklet-btn">
+                🔍 Check HentArBrezel EMQ
+            </a>
+            <p style="margin-top: 10px; color: #666; font-size: 14px;">
+                ↑ Drag to bookmarks bar (or right-click → Bookmark This Link)
+            </p>
+        </div>
+        
+        <div class="instructions">
+            <h4>📖 How to Use</h4>
+            <ol>
+                <li>Drag the button above to your browser's bookmarks bar</li>
+                <li>Go to <strong>hentarbrezel.com</strong></li>
+                <li>Click the bookmark you just saved</li>
+                <li>A popup will show your Event Match Quality score</li>
+            </ol>
+        </div>
+        
+        <div class="action-section">
+            <h3>🎯 What the Scores Mean</h3>
+            <div style="text-align: left; margin-top: 15px;">
+                <p><strong>8.5-10:</strong> Excellent - Optimal data collection</p>
+                <p><strong>7.0-8.4:</strong> Good - Meets Facebook's recommendations</p>
+                <p><strong>5.0-6.9:</strong> Fair - Missing important parameters</p>
+                <p><strong>Below 5:</strong> Poor - Critical data missing</p>
+            </div>
+        </div>
+        
+        <div class="info-card" style="margin-top: 20px;">
+            <h3>❓ What This Tool Does NOT Do</h3>
+            <ul style="margin-left: 20px; color: #65676b;">
+                <li>Does NOT modify your website</li>
+                <li>Does NOT install any code</li>
+                <li>Does NOT send data anywhere</li>
+                <li>Just reads existing data to calculate quality score</li>
+            </ul>
+        </div>
+        
+        <div class="warning">
+            <strong>⚠️ Important:</strong> This tool checks what data is available in the browser (localStorage and cookies) when visiting hentarbrezel.com. The score reflects how much user data Facebook can match for better ad targeting. Higher scores = better ad performance.
+        </div>
+        
+        <div class="action-section" style="background: #f0f2f5;">
+            <h3>💡 Improve Your Score</h3>
+            <p>To improve your Event Match Quality:</p>
+            <ul style="text-align: left; margin: 15px 0 0 20px;">
+                <li>Collect email addresses from users</li>
+                <li>Collect phone numbers (with consent)</li>
+                <li>Ensure Facebook Pixel is properly installed</li>
+                <li>Set user IDs for logged-in users</li>
+                <li>Enable Advanced Matching in Facebook Pixel</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
