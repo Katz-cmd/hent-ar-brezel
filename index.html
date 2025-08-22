@@ -20,6 +20,12 @@
     <meta name="twitter:description" content="Vêtements tactiques inspirés des unités d'élite françaises. Collection Neon Units - Qualité premium, design authentique." />
     <meta name="twitter:image" content="/655b4f8fbe94a9ab563f377b20e38a51_edited.jpg" />
     
+    <script>
+      window.FB_PIXEL_ID   = '1452655989058364';
+      window.CAPI_ENDPOINT = 'https://capiworker.elhallaoui-mohamed1.workers.dev';
+      // window.FB_TEST_EVENT_CODE = 'TEST123'; // optional
+    </script>
+
     <!-- ⚙️ Step 1: Global Functions Declaration (MUST BE FIRST) -->
     <script>
     // ✅ Attach to window immediately
@@ -159,27 +165,23 @@
     });
     </script>
 
-    <script>
-      window.FB_PIXEL_ID = '1452655989058364';             // REQUIRED
-      window.CAPI_ENDPOINT = 'https://<your-worker>.workers.dev'; // REQUIRED
-      // window.FB_TEST_EVENT_CODE = 'TEST123';            // optional for Test Events
-    </script>
-
     <!-- ⚙️ Step 2: Single Facebook Pixel Loading (LOAD EXACTLY ONCE) -->
     <script>
 (function(w, d){
-  if (!w.fbPixelLoaded) {
-    w.fbPixelLoaded = true;
-    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
-    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
-    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
-    (w, d, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+  if (w.fbPixelLoaded) return;
+  w.fbPixelLoaded = true;
 
-    var pixelId = w.FB_PIXEL_ID || '1452655989058364';
-    fbq('init', pixelId);
-    fbq('track', 'PageView');
-  }
+  // load base pixel script once
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
+  (w, d, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+
+  var pixelId = w.FB_PIXEL_ID || '1452655989058364';
+  fbq('init', pixelId);
+  fbq('track', 'PageView');
+
   setTimeout(() => {
     if (typeof fbq === 'undefined') {
       console.warn('Pixel failed to load');
@@ -195,35 +197,55 @@
     <!-- ⚙️ Step 3: Facebook Pixel Wrapper with User Data (AFTER Step 2) -->
     <script>
 (function(originalFbq){
+  // prevent double wrap in SPA/HMR
+  if (window.__FB_WRAPPED__) return;
+  window.__FB_WRAPPED__ = true;
+
   window.trackedEvents = window.trackedEvents || new Set();
 
-  function genEventID() {
-    return Date.now().toString(36) + Math.random().toString(36).slice(2);
+  function genEventID(){ return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+  // Validate and resolve endpoint safely
+  function getCapiEndpoint(){
+    let ep = (window.CAPI_ENDPOINT ?? '').toString().trim();
+    if (!ep) ep = 'https://capiworker.elhallaoui-mohamed1.workers.dev'; // your default
+    // Require absolute URL; if relative, resolve against current origin
+    try {
+      if (!/^https?:\/\//i.test(ep)) ep = new URL(ep, location.origin).toString();
+      // final validation
+      new URL(ep);
+      return ep;
+    } catch {
+      return null;
+    }
   }
 
   window.fbq = async function(cmd, ev, p = {}) {
     if (cmd !== 'track') { return originalFbq.apply(this, arguments); }
 
-    // Dedupe key (browser-side)
     const eventKey = `${ev}_${JSON.stringify(p.content_ids || [])}_${p.value || 0}`;
     if (window.trackedEvents.has(eventKey)) return;
     window.trackedEvents.add(eventKey);
 
-    // Read identifiers
-    const hashedEmail = localStorage.getItem('hashedEmail');   // if your app already sets these
+    const hashedEmail = localStorage.getItem('hashedEmail');
     const hashedPhone = localStorage.getItem('hashedPhone');
     const fbc = localStorage.getItem('fbc');
     const fbp = localStorage.getItem('fbp');
 
-    // Create event ID once, use for both Pixel (eventID) and CAPI (event_id)
     const eid = p.eventID || p.event_id || genEventID();
 
-    // Send Browser Pixel (must use eventID camelCase)
+    // Browser Pixel uses eventID (camelCase)
     const browserParams = { ...p, eventID: eid };
-    delete browserParams.event_id; // ensure only eventID for Pixel
-    originalFbq(cmd, ev, browserParams);
+    delete browserParams.event_id;
+    originalFbq('track', ev, browserParams);
 
-    // Build CAPI payload
+    // Build & send CAPI only if endpoint is valid
+    const endpoint = getCapiEndpoint();
+    if (!endpoint) {
+      console.warn('CAPI endpoint missing/invalid; skipped server event');
+      return;
+    }
+
     try {
       const user_data = {
         ...(hashedEmail && { em: hashedEmail }),
@@ -246,19 +268,15 @@
       delete capiPayload.data[0].custom_data.event_id;
       delete capiPayload.data[0].custom_data.user_data;
 
-      const endpoint = window.CAPI_ENDPOINT;
-      if (!endpoint) { console.warn('CAPI endpoint not configured'); return; }
-
       const url = new URL(endpoint);
       if (window.FB_TEST_EVENT_CODE) url.searchParams.set('test_event_code', window.FB_TEST_EVENT_CODE);
 
-      const res = await fetch(url.toString(), {
+      await fetch(url.toString(), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(capiPayload),
         keepalive: true
       });
-      // Optional: console.log('CAPI response', await res.json());
     } catch (e) {
       console.error('CAPI send failed', e);
     }
