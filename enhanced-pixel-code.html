@@ -1,0 +1,358 @@
+<!-- Enhanced Facebook Pixel with Better Event Match Quality -->
+<script>
+    // Configuration
+    window.FB_CONFIG = {
+        pixelId: '1452655989058364',
+        capiEndpoint: 'https://capiworker.elhallaoui-mohamed1.workers.dev/',
+        testEventCode: '', // Add test code when testing
+        debug: false
+    };
+</script>
+
+<!-- Facebook Pixel Base Code -->
+<script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window,document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    
+    // Initialize with Advanced Matching (improves match quality)
+    fbq('init', window.FB_CONFIG.pixelId, {
+        em: localStorage.getItem('user_email_hash') || undefined,
+        ph: localStorage.getItem('user_phone_hash') || undefined,
+        fn: localStorage.getItem('user_firstname_hash') || undefined,
+        ln: localStorage.getItem('user_lastname_hash') || undefined,
+        external_id: localStorage.getItem('user_id') || undefined
+    });
+    
+    fbq('track', 'PageView');
+</script>
+
+<!-- Enhanced Tracking with Improved Match Quality -->
+<script>
+(function() {
+    // SHA-256 hashing function for client-side hashing
+    async function sha256(message) {
+        const msgBuffer = new TextEncoder().encode(message);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // Enhanced cookie capture
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    }
+
+    // Capture and store Facebook cookies immediately
+    function captureFacebookCookies() {
+        const fbc = getCookie('_fbc');
+        const fbp = getCookie('_fbp');
+        
+        if (fbc) {
+            localStorage.setItem('_fbc', fbc);
+            console.log('Captured _fbc cookie');
+        }
+        if (fbp) {
+            localStorage.setItem('_fbp', fbp);
+            console.log('Captured _fbp cookie');
+        }
+        
+        return { fbc: fbc || localStorage.getItem('_fbc'), 
+                 fbp: fbp || localStorage.getItem('_fbp') };
+    }
+
+    // Capture cookies on page load and periodically
+    captureFacebookCookies();
+    setInterval(captureFacebookCookies, 5000);
+
+    // Generate unique event ID
+    function generateEventId() {
+        return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
+    }
+
+    // Store original fbq
+    const originalFbq = window.fbq;
+
+    // Enhanced wrapper with better data capture
+    window.fbq = function() {
+        const [command, event, params] = arguments;
+        
+        // Add event ID if not present
+        if ((command === 'track' || command === 'trackCustom') && params) {
+            params.eventID = params.eventID || generateEventId();
+        }
+        
+        // Call original
+        originalFbq.apply(this, arguments);
+        
+        // Send to CAPI with enhanced data
+        if ((command === 'track' || command === 'trackCustom') && window.FB_CONFIG.capiEndpoint) {
+            sendEnhancedCAPI(command, event, params);
+        }
+    };
+
+    // Copy properties
+    Object.keys(originalFbq).forEach(key => {
+        window.fbq[key] = originalFbq[key];
+    });
+
+    // Enhanced CAPI sending with all available data
+    async function sendEnhancedCAPI(command, eventName, parameters = {}) {
+        try {
+            const cookies = captureFacebookCookies();
+            
+            // Build comprehensive user data
+            const userData = {
+                // Facebook cookies (critical for matching)
+                fbc: cookies.fbc || getCookie('_fbc') || localStorage.getItem('_fbc'),
+                fbp: cookies.fbp || getCookie('_fbp') || localStorage.getItem('_fbp'),
+                
+                // User data (will be hashed by worker if not already)
+                em: localStorage.getItem('user_email') || localStorage.getItem('user_email_hash'),
+                ph: localStorage.getItem('user_phone') || localStorage.getItem('user_phone_hash'),
+                fn: localStorage.getItem('user_firstname') || localStorage.getItem('user_firstname_hash'),
+                ln: localStorage.getItem('user_lastname') || localStorage.getItem('user_lastname_hash'),
+                ct: localStorage.getItem('user_city'),
+                st: localStorage.getItem('user_state'),
+                zp: localStorage.getItem('user_zip'),
+                country: localStorage.getItem('user_country'),
+                external_id: localStorage.getItem('user_id'),
+                
+                // Additional data for better matching
+                subscription_id: localStorage.getItem('subscription_id'),
+                fb_login_id: localStorage.getItem('fb_login_id'),
+                lead_id: localStorage.getItem('lead_id')
+            };
+            
+            // Remove null/undefined values
+            Object.keys(userData).forEach(key => {
+                if (!userData[key]) delete userData[key];
+            });
+            
+            // Event payload
+            const payload = {
+                event_name: eventName,
+                event_time: Math.floor(Date.now() / 1000),
+                event_id: parameters.eventID || generateEventId(),
+                action_source: 'website',
+                event_source_url: window.location.href,
+                user_data: userData,
+                custom_data: parameters || {},
+                data_processing_options: [], // For CCPA compliance
+                data_processing_options_country: 0,
+                data_processing_options_state: 0
+            };
+            
+            // Remove eventID from custom_data
+            delete payload.custom_data.eventID;
+            
+            // Add test code if present
+            if (window.FB_CONFIG.testEventCode) {
+                payload.test_event_code = window.FB_CONFIG.testEventCode;
+            }
+            
+            // Send to CAPI
+            const response = await fetch(window.FB_CONFIG.capiEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                keepalive: true
+            });
+            
+            if (window.FB_CONFIG.debug) {
+                const result = await response.json();
+                console.log('Enhanced CAPI Response:', result);
+            }
+        } catch (error) {
+            if (window.FB_CONFIG.debug) {
+                console.error('Enhanced CAPI Error:', error);
+            }
+        }
+    }
+
+    // Function to update user data (call this when you have user information)
+    window.updateUserData = async function(data) {
+        // Hash sensitive data before storing
+        if (data.email) {
+            const hashedEmail = await sha256(data.email.toLowerCase().trim());
+            localStorage.setItem('user_email_hash', hashedEmail);
+            localStorage.setItem('user_email', data.email); // Store unhashed for CAPI worker to hash
+        }
+        if (data.phone) {
+            const cleanPhone = data.phone.replace(/\D/g, '');
+            const hashedPhone = await sha256(cleanPhone);
+            localStorage.setItem('user_phone_hash', hashedPhone);
+            localStorage.setItem('user_phone', data.phone);
+        }
+        if (data.firstName) {
+            const hashedFn = await sha256(data.firstName.toLowerCase().trim());
+            localStorage.setItem('user_firstname_hash', hashedFn);
+            localStorage.setItem('user_firstname', data.firstName);
+        }
+        if (data.lastName) {
+            const hashedLn = await sha256(data.lastName.toLowerCase().trim());
+            localStorage.setItem('user_lastname_hash', hashedLn);
+            localStorage.setItem('user_lastname', data.lastName);
+        }
+        if (data.userId) {
+            localStorage.setItem('user_id', data.userId);
+        }
+        if (data.city) localStorage.setItem('user_city', data.city);
+        if (data.state) localStorage.setItem('user_state', data.state);
+        if (data.zip) localStorage.setItem('user_zip', data.zip);
+        if (data.country) localStorage.setItem('user_country', data.country);
+        
+        // Re-initialize pixel with new data for better matching
+        fbq('init', window.FB_CONFIG.pixelId, {
+            em: localStorage.getItem('user_email_hash'),
+            ph: localStorage.getItem('user_phone_hash'),
+            fn: localStorage.getItem('user_firstname_hash'),
+            ln: localStorage.getItem('user_lastname_hash'),
+            external_id: localStorage.getItem('user_id')
+        });
+        
+        console.log('User data updated for enhanced matching');
+    };
+
+    // Auto-capture data from forms
+    document.addEventListener('DOMContentLoaded', function() {
+        // Monitor form submissions
+        document.addEventListener('submit', async function(e) {
+            const form = e.target;
+            const formData = {};
+            
+            // Try to extract email
+            const emailField = form.querySelector('input[type="email"], input[name*="email"], input[id*="email"]');
+            if (emailField && emailField.value) {
+                formData.email = emailField.value;
+            }
+            
+            // Try to extract phone
+            const phoneField = form.querySelector('input[type="tel"], input[name*="phone"], input[id*="phone"]');
+            if (phoneField && phoneField.value) {
+                formData.phone = phoneField.value;
+            }
+            
+            // Try to extract name
+            const firstNameField = form.querySelector('input[name*="first"], input[id*="first"]');
+            const lastNameField = form.querySelector('input[name*="last"], input[id*="last"]');
+            const fullNameField = form.querySelector('input[name*="name"]:not([name*="first"]):not([name*="last"])');
+            
+            if (firstNameField && firstNameField.value) {
+                formData.firstName = firstNameField.value;
+            }
+            if (lastNameField && lastNameField.value) {
+                formData.lastName = lastNameField.value;
+            }
+            if (fullNameField && fullNameField.value && !formData.firstName) {
+                const names = fullNameField.value.split(' ');
+                formData.firstName = names[0];
+                if (names.length > 1) {
+                    formData.lastName = names.slice(1).join(' ');
+                }
+            }
+            
+            // Update user data if we found anything
+            if (Object.keys(formData).length > 0) {
+                await updateUserData(formData);
+            }
+        });
+        
+        // Monitor input changes for email/phone fields
+        document.addEventListener('change', async function(e) {
+            const input = e.target;
+            if (input.type === 'email' || input.name?.includes('email')) {
+                await updateUserData({ email: input.value });
+            }
+            if (input.type === 'tel' || input.name?.includes('phone')) {
+                await updateUserData({ phone: input.value });
+            }
+        });
+    });
+
+    // Track checkout data
+    window.trackCheckout = function(orderData) {
+        // Update user data if provided
+        if (orderData.customer) {
+            updateUserData({
+                email: orderData.customer.email,
+                phone: orderData.customer.phone,
+                firstName: orderData.customer.firstName,
+                lastName: orderData.customer.lastName,
+                userId: orderData.customer.id,
+                city: orderData.customer.city,
+                state: orderData.customer.state,
+                zip: orderData.customer.zip,
+                country: orderData.customer.country
+            });
+        }
+        
+        // Track purchase with all data
+        fbq('track', 'Purchase', {
+            value: orderData.value,
+            currency: orderData.currency || 'EUR',
+            content_ids: orderData.productIds,
+            content_type: 'product',
+            num_items: orderData.numItems,
+            order_id: orderData.orderId
+        });
+    };
+
+    // Log initialization
+    if (window.FB_CONFIG.debug) {
+        console.log('Enhanced Facebook Pixel initialized with advanced matching');
+        console.log('Current match data:', {
+            fbc: getCookie('_fbc') ? 'Present' : 'Missing',
+            fbp: getCookie('_fbp') ? 'Present' : 'Missing',
+            email: localStorage.getItem('user_email_hash') ? 'Present' : 'Missing',
+            phone: localStorage.getItem('user_phone_hash') ? 'Present' : 'Missing',
+            userId: localStorage.getItem('user_id') ? 'Present' : 'Missing'
+        });
+    }
+})();
+</script>
+
+<!-- USAGE EXAMPLES -->
+<script>
+// Example 1: Update user data when known (e.g., after login)
+// updateUserData({
+//     email: 'user@example.com',
+//     phone: '+33612345678',
+//     firstName: 'John',
+//     lastName: 'Doe',
+//     userId: 'USER_123',
+//     city: 'Paris',
+//     state: 'IDF',
+//     zip: '75001',
+//     country: 'FR'
+// });
+
+// Example 2: Track purchase with customer data
+// trackCheckout({
+//     value: 99.99,
+//     currency: 'EUR',
+//     productIds: ['PROD_001', 'PROD_002'],
+//     numItems: 2,
+//     orderId: 'ORDER_123',
+//     customer: {
+//         email: 'customer@example.com',
+//         phone: '+33612345678',
+//         firstName: 'Jane',
+//         lastName: 'Smith',
+//         id: 'CUST_456'
+//     }
+// });
+</script>
+
+<noscript>
+    <img height="1" width="1" style="display:none" 
+         src="https://www.facebook.com/tr?id=1452655989058364&ev=PageView&noscript=1"/>
+</noscript>
