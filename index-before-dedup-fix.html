@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hent Ar Brezel - French Tactical Apparel Landing Page</title>
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Hent Ar Brezel - French Tactical Apparel" />
+    <meta property="og:description" content="Vêtements tactiques inspirés des unités d'élite françaises. Collection Neon Units - Qualité premium, design authentique." />
+    <meta property="og:image" content="/655b4f8fbe94a9ab563f377b20e38a51_edited.jpg" />
+    <meta property="og:url" content="https://hentarbrezel.com" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Hent Ar Brezel" />
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Hent Ar Brezel - French Tactical Apparel" />
+    <meta name="twitter:description" content="Vêtements tactiques inspirés des unités d'élite françaises. Collection Neon Units - Qualité premium, design authentique." />
+    <meta name="twitter:image" content="/655b4f8fbe94a9ab563f377b20e38a51_edited.jpg" />
+
+    <!-- Facebook Pixel Configuration -->
+    <script>
+        // Configuration - Edit these values as needed
+        window.FB_CONFIG = {
+            pixelId: '1452655989058364',
+            capiEndpoint: 'https://capiworker.elhallaoui-mohamed1.workers.dev/',
+            testEventCode: '', // Add test event code here when testing
+            debug: false // Set to true only when debugging
+        };
+    </script>
+
+    <!-- Facebook Pixel Code - Enhanced Version with Advanced Matching -->
+    <script>
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window,document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        
+        // Initialize pixel with Advanced Matching for better Event Match Quality
+        fbq('init', window.FB_CONFIG.pixelId, {
+            em: localStorage.getItem('user_email_hash') || undefined,
+            ph: localStorage.getItem('user_phone_hash') || undefined,
+            fn: localStorage.getItem('user_firstname_hash') || undefined,
+            ln: localStorage.getItem('user_lastname_hash') || undefined,
+            external_id: localStorage.getItem('user_id') || undefined
+        });
+        fbq('track', 'PageView');
+        
+        // Debug logging
+        if (window.FB_CONFIG.debug) {
+            console.log('Facebook Pixel initialized with Advanced Matching, ID:', window.FB_CONFIG.pixelId);
+        }
+    </script>
+    <!-- End Facebook Pixel Code -->
+
+    <!-- Enhanced Tracking with CAPI Support and Better Match Quality -->
+    <script>
+        // SHA-256 hashing for client-side data privacy
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // Enhanced cookie helper with persistence
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        // Capture and persist Facebook cookies
+        function captureFacebookCookies() {
+            const fbc = getCookie('_fbc');
+            const fbp = getCookie('_fbp');
+            
+            if (fbc) {
+                localStorage.setItem('_fbc', fbc);
+                if (window.FB_CONFIG.debug) console.log('Captured _fbc cookie');
+            }
+            if (fbp) {
+                localStorage.setItem('_fbp', fbp);
+                if (window.FB_CONFIG.debug) console.log('Captured _fbp cookie');
+            }
+            
+            return { 
+                fbc: fbc || localStorage.getItem('_fbc'), 
+                fbp: fbp || localStorage.getItem('_fbp') 
+            };
+        }
+
+        // Capture cookies immediately and periodically
+        captureFacebookCookies();
+        setInterval(captureFacebookCookies, 5000);
+
+        // Generate unique event ID
+        function generateEventId() {
+            return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
+        }
+
+        // Enhanced fbq wrapper for CAPI support
+        const originalFbq = window.fbq;
+        window.fbq = function() {
+            // Call original fbq
+            originalFbq.apply(this, arguments);
+            
+            // If it's a track event, also send to CAPI
+            if (arguments[0] === 'track' || arguments[0] === 'trackCustom') {
+                sendToCAPI(arguments[0], arguments[1], arguments[2]);
+            }
+        };
+        
+        // Copy original fbq properties
+        Object.keys(originalFbq).forEach(key => {
+            window.fbq[key] = originalFbq[key];
+        });
+
+        // Enhanced CAPI sending with comprehensive user data
+        async function sendToCAPI(command, eventName, parameters = {}) {
+            if (!window.FB_CONFIG.capiEndpoint) return;
+            
+            try {
+                // Capture cookies with fallback
+                const cookies = captureFacebookCookies();
+                
+                // Build comprehensive user data for better match quality
+                const userData = {
+                    // Facebook cookies (critical for matching)
+                    fbc: cookies.fbc,
+                    fbp: cookies.fbp,
+                    
+                    // User identifiers (will be hashed by worker if not already)
+                    em: localStorage.getItem('user_email') || localStorage.getItem('user_email_hash'),
+                    ph: localStorage.getItem('user_phone') || localStorage.getItem('user_phone_hash'),
+                    fn: localStorage.getItem('user_firstname') || localStorage.getItem('user_firstname_hash'),
+                    ln: localStorage.getItem('user_lastname') || localStorage.getItem('user_lastname_hash'),
+                    external_id: localStorage.getItem('user_id'),
+                    
+                    // Additional location data
+                    ct: localStorage.getItem('user_city'),
+                    st: localStorage.getItem('user_state'),
+                    zp: localStorage.getItem('user_zip'),
+                    country: localStorage.getItem('user_country')
+                };
+                
+                // Build event payload
+                const eventId = generateEventId();
+                const payload = {
+                    event_name: eventName,
+                    event_time: Math.floor(Date.now() / 1000),
+                    event_id: eventId,
+                    action_source: 'website',
+                    event_source_url: window.location.href,
+                    user_data: userData,
+                    custom_data: parameters
+                };
+                
+                // Add test event code if configured
+                if (window.FB_CONFIG.testEventCode) {
+                    payload.test_event_code = window.FB_CONFIG.testEventCode;
+                }
+                
+                // Send to CAPI worker
+                const response = await fetch(window.FB_CONFIG.capiEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                    keepalive: true // Ensure request completes even if page unloads
+                });
+                
+                if (window.FB_CONFIG.debug) {
+                    const result = await response.json();
+                    console.log('CAPI Response:', result);
+                }
+            } catch (error) {
+                if (window.FB_CONFIG.debug) {
+                    console.error('CAPI Error:', error);
+                }
+            }
+        }
+
+        // Auto-capture form data for better match quality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Monitor form submissions to capture user data
+            document.addEventListener('submit', async function(e) {
+                const form = e.target;
+                const formData = {};
+                
+                // Try to extract email
+                const emailField = form.querySelector('input[type="email"], input[name*="email"], input[id*="email"]');
+                if (emailField && emailField.value) {
+                    formData.email = emailField.value;
+                }
+                
+                // Try to extract phone
+                const phoneField = form.querySelector('input[type="tel"], input[name*="phone"], input[id*="phone"], input[name*="tel"]');
+                if (phoneField && phoneField.value) {
+                    formData.phone = phoneField.value;
+                }
+                
+                // Try to extract names
+                const firstNameField = form.querySelector('input[name*="first"], input[id*="first"], input[name*="prenom"]');
+                const lastNameField = form.querySelector('input[name*="last"], input[id*="last"], input[name*="nom"]');
+                
+                if (firstNameField && firstNameField.value) {
+                    formData.firstName = firstNameField.value;
+                }
+                if (lastNameField && lastNameField.value) {
+                    formData.lastName = lastNameField.value;
+                }
+                
+                // Update user data if we found anything
+                if (Object.keys(formData).length > 0) {
+                    await updateUserData(formData);
+                    if (window.FB_CONFIG.debug) {
+                        console.log('Captured form data:', formData);
+                    }
+                }
+            });
+            
+            // Monitor email/phone input changes
+            document.addEventListener('change', async function(e) {
+                const input = e.target;
+                if (input.type === 'email' || input.name?.includes('email')) {
+                    await updateUserData({ email: input.value });
+                }
+                if (input.type === 'tel' || input.name?.includes('phone') || input.name?.includes('tel')) {
+                    await updateUserData({ phone: input.value });
+                }
+            });
+        });
+
+        // Track product page views
+        document.addEventListener('DOMContentLoaded', function() {
+            const productPages = {
+                '/product/price_1RYQhID3hdzeARaV86yI6lOw': {
+                    content_name: 'White Hoodie',
+                    content_ids: ['BRZ-H002'],
+                    content_type: 'product',
+                    content_category: 'Hoodie',
+                    value: 69.99,
+                    currency: 'EUR'
+                },
+                '/product/price_1RYTLJD3hdzeARaVPyImkzCS': {
+                    content_name: 'Blue Hoodie',
+                    content_ids: ['BRZ-H003'],
+                    content_type: 'product',
+                    content_category: 'Hoodie',
+                    value: 69.99,
+                    currency: 'EUR'
+                },
+                '/product/price_1RYTMiD3hdzeARaVApuZgd0K': {
+                    content_name: 'Red Hoodie',
+                    content_ids: ['BRZ-H001'],
+                    content_type: 'product',
+                    content_category: 'Hoodie',
+                    value: 69.99,
+                    currency: 'EUR'
+                },
+                '/product/price_1RYTILD3hdzeARaVLdV8GKsK': {
+                    content_name: 'Red T-Shirt',
+                    content_ids: ['BRZ-T001'],
+                    content_type: 'product',
+                    content_category: 'T-Shirt',
+                    value: 39.99,
+                    currency: 'EUR'
+                },
+                '/product/price_1RYTFJD3hdzeARaV815G4LfJ': {
+                    content_name: 'White T-Shirt',
+                    content_ids: ['BRZ-T002'],
+                    content_type: 'product',
+                    content_category: 'T-Shirt',
+                    value: 39.99,
+                    currency: 'EUR'
+                },
+                '/product/price_1RYTFtD3hdzeARaVFK20gVjq': {
+                    content_name: 'Blue T-Shirt',
+                    content_ids: ['BRZ-T003'],
+                    content_type: 'product',
+                    content_category: 'T-Shirt',
+                    value: 39.99,
+                    currency: 'EUR'
+                }
+            };
+            
+            // Check if we're on a product page
+            const currentPath = window.location.pathname;
+            const productData = productPages[currentPath];
+            
+            if (productData) {
+                // Track ViewContent event for product pages
+                fbq('track', 'ViewContent', productData);
+                
+                if (window.FB_CONFIG.debug) {
+                    console.log('Tracked ViewContent for:', productData.content_name);
+                }
+            }
+        });
+
+        // Helper function to track custom events
+        window.trackCustomEvent = function(eventName, parameters = {}) {
+            fbq('trackCustom', eventName, parameters);
+            
+            if (window.FB_CONFIG.debug) {
+                console.log('Tracked custom event:', eventName, parameters);
+            }
+        };
+
+        // Critical function to update user data for better match quality
+        window.updateUserData = async function(data) {
+            // Hash sensitive data before storing
+            if (data.email) {
+                const hashedEmail = await sha256(data.email.toLowerCase().trim());
+                localStorage.setItem('user_email_hash', hashedEmail);
+                localStorage.setItem('user_email', data.email);
+            }
+            if (data.phone) {
+                const cleanPhone = data.phone.replace(/\D/g, '');
+                const hashedPhone = await sha256(cleanPhone);
+                localStorage.setItem('user_phone_hash', hashedPhone);
+                localStorage.setItem('user_phone', data.phone);
+            }
+            if (data.firstName) {
+                const hashedFn = await sha256(data.firstName.toLowerCase().trim());
+                localStorage.setItem('user_firstname_hash', hashedFn);
+                localStorage.setItem('user_firstname', data.firstName);
+            }
+            if (data.lastName) {
+                const hashedLn = await sha256(data.lastName.toLowerCase().trim());
+                localStorage.setItem('user_lastname_hash', hashedLn);
+                localStorage.setItem('user_lastname', data.lastName);
+            }
+            if (data.userId) localStorage.setItem('user_id', data.userId);
+            if (data.city) localStorage.setItem('user_city', data.city);
+            if (data.state) localStorage.setItem('user_state', data.state);
+            if (data.zip) localStorage.setItem('user_zip', data.zip);
+            if (data.country) localStorage.setItem('user_country', data.country);
+            
+            // Re-initialize pixel with new data for better matching
+            fbq('init', window.FB_CONFIG.pixelId, {
+                em: localStorage.getItem('user_email_hash'),
+                ph: localStorage.getItem('user_phone_hash'),
+                fn: localStorage.getItem('user_firstname_hash'),
+                ln: localStorage.getItem('user_lastname_hash'),
+                external_id: localStorage.getItem('user_id')
+            });
+            
+            if (window.FB_CONFIG.debug) {
+                console.log('User data updated for enhanced matching');
+            }
+        };
+
+        // Helper function to update user data
+        window.updateUserData = function(email, phone, userId) {
+            // This should be called after user provides their information
+            // The actual hashing should be done server-side or using a secure method
+            if (email) {
+                // In production, hash the email before storing
+                localStorage.setItem('user_email_hash', email); // Should be SHA256
+            }
+            if (phone) {
+                // In production, hash the phone before storing
+                localStorage.setItem('user_phone_hash', phone); // Should be SHA256
+            }
+            if (userId) {
+                localStorage.setItem('user_id', userId);
+            }
+        };
+    </script>
+
+    <!-- Main App Scripts -->
+    <!-- Helper functions for e-commerce tracking -->
+    <script>
+        // Track checkout with user data for better match quality
+        window.trackCheckout = function(orderData) {
+            // Update user data if provided
+            if (orderData.customer) {
+                updateUserData({
+                    email: orderData.customer.email,
+                    phone: orderData.customer.phone,
+                    firstName: orderData.customer.firstName,
+                    lastName: orderData.customer.lastName,
+                    userId: orderData.customer.id,
+                    city: orderData.customer.city,
+                    state: orderData.customer.state,
+                    zip: orderData.customer.zip,
+                    country: orderData.customer.country || 'FR'
+                });
+            }
+            
+            // Track purchase event
+            fbq('track', 'Purchase', {
+                value: orderData.value,
+                currency: orderData.currency || 'EUR',
+                content_ids: orderData.productIds || [],
+                content_type: 'product',
+                num_items: orderData.numItems || 1,
+                order_id: orderData.orderId
+            });
+        };
+
+        // Track add to cart with product data
+        window.trackAddToCart = function(productId, value, currency = 'EUR') {
+            fbq('track', 'AddToCart', {
+                content_ids: [productId],
+                content_type: 'product',
+                value: value,
+                currency: currency
+            });
+        };
+
+        // Track lead generation
+        window.trackLead = function(leadData = {}) {
+            // Capture email if provided
+            if (leadData.email) {
+                updateUserData({ email: leadData.email });
+            }
+            
+            fbq('track', 'Lead', leadData);
+        };
+    </script>
+
+    <script type="module" crossorigin src="/assets/index-dckquwlz.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-ypvo4vrl.css">
+</head>
+<body>
+    <div id="root"></div>
+</body>
+</html>
