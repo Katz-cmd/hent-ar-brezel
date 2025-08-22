@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Facebook EMQ Tester</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        
+        h1 {
+            color: #1877f2;
+            margin-bottom: 20px;
+            font-size: 32px;
+        }
+        
+        .description {
+            color: #65676b;
+            margin-bottom: 30px;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        
+        .test-button {
+            background: #1877f2;
+            color: white;
+            border: none;
+            padding: 20px 50px;
+            border-radius: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 20px 0;
+        }
+        
+        .test-button:hover {
+            background: #166fe5;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(24, 119, 242, 0.3);
+        }
+        
+        .alternative-section {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #e4e6eb;
+        }
+        
+        .steps {
+            background: #f0f2f5;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .steps h3 {
+            color: #1c1e21;
+            margin-bottom: 15px;
+        }
+        
+        .steps ol {
+            margin-left: 20px;
+            color: #65676b;
+        }
+        
+        .steps li {
+            margin: 10px 0;
+            line-height: 1.5;
+        }
+        
+        .code-box {
+            background: #2d3748;
+            color: #48bb78;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            text-align: left;
+            overflow-x: auto;
+            position: relative;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #48bb78;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .copy-btn:hover {
+            background: #38a169;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            text-align: left;
+            color: #856404;
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            text-align: left;
+            color: #0c5460;
+        }
+        
+        .score-guide {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .score-item {
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .score-excellent {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .score-good {
+            background: #cce5ff;
+            color: #004085;
+        }
+        
+        .score-fair {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .score-poor {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Facebook Event Quality Tester</h1>
+        <p class="description">
+            Check your website's Facebook Event Match Quality (EMQ) score to see how well your data collection is optimized for Facebook ads.
+        </p>
+        
+        <button class="test-button" onclick="openTestWindow()">
+            🚀 Test HentArBrezel.com Now
+        </button>
+        
+        <div class="info-box">
+            <strong>ℹ️ What this does:</strong><br>
+            Opens your website in a new window with a testing tool that checks what user data is being collected for Facebook matching.
+        </div>
+        
+        <div class="alternative-section">
+            <h2 style="color: #1c1e21; margin-bottom: 20px;">🛠️ Alternative: Manual Console Check</h2>
+            
+            <div class="steps">
+                <h3>Simple Steps to Check Your EMQ:</h3>
+                <ol>
+                    <li>Open <strong>hentarbrezel.com</strong> in your browser</li>
+                    <li>Right-click anywhere on the page</li>
+                    <li>Select <strong>"Inspect"</strong> or <strong>"Inspect Element"</strong></li>
+                    <li>Click the <strong>"Console"</strong> tab</li>
+                    <li>Copy and paste this code:</li>
+                </ol>
+            </div>
+            
+            <div class="code-box">
+                <button class="copy-btn" onclick="copyCode()">📋 Copy Code</button>
+                <pre id="consoleCode">// Facebook EMQ Checker
+(function() {
+    function getCookie(name) {
+        const value = '; ' + document.cookie;
+        const parts = value.split('; ' + name + '=');
+        return parts.length === 2 ? parts.pop().split(';')[0] : null;
+    }
+    
+    const data = {
+        email: localStorage.getItem('user_email') || localStorage.getItem('user_email_hash'),
+        phone: localStorage.getItem('user_phone') || localStorage.getItem('user_phone_hash'),
+        fbp: getCookie('_fbp'),
+        fbc: getCookie('_fbc'),
+        user_id: localStorage.getItem('user_id') || localStorage.getItem('external_id'),
+        first_name: localStorage.getItem('user_fn'),
+        last_name: localStorage.getItem('user_ln')
+    };
+    
+    let score = 0;
+    let found = [];
+    let missing = [];
+    
+    // Calculate score
+    if (data.email) { score += 1.5; found.push('✅ Email'); } else { missing.push('❌ Email'); }
+    if (data.phone) { score += 1.5; found.push('✅ Phone'); } else { missing.push('❌ Phone'); }
+    if (data.fbp) { score += 1.5; found.push('✅ FB Browser ID'); } else { missing.push('❌ FB Browser ID'); }
+    if (data.fbc) { score += 1.5; found.push('✅ FB Click ID'); } else { missing.push('❌ FB Click ID'); }
+    if (data.user_id) { score += 1.5; found.push('✅ User ID'); } else { missing.push('❌ User ID'); }
+    if (data.first_name) { score += 0.4; found.push('✅ First Name'); }
+    if (data.last_name) { score += 0.4; found.push('✅ Last Name'); }
+    
+    score = Math.min(10, score).toFixed(1);
+    
+    console.log('%c📊 FACEBOOK EVENT MATCH QUALITY REPORT', 'background: #1877f2; color: white; padding: 10px; font-size: 16px; font-weight: bold;');
+    console.log('%cYour EMQ Score: ' + score + '/10', 'font-size: 20px; font-weight: bold; color: ' + (score >= 7 ? '#28a745' : score >= 5 ? '#ffc107' : '#dc3545'));
+    
+    if (found.length > 0) {
+        console.log('%cData Found:', 'font-weight: bold; color: #28a745; font-size: 14px;');
+        found.forEach(item => console.log(item));
+    }
+    
+    if (missing.length > 0) {
+        console.log('%cData Missing:', 'font-weight: bold; color: #dc3545; font-size: 14px;');
+        missing.forEach(item => console.log(item));
+    }
+    
+    console.log('%c―――――――――――――――――――――', 'color: #ccc;');
+    console.log('📈 Score Guide:');
+    console.log('8.5-10: Excellent | 7-8.4: Good | 5-6.9: Fair | Below 5: Poor');
+    console.log('%c―――――――――――――――――――――', 'color: #ccc;');
+    console.log('Facebook Pixel: ' + (typeof fbq !== 'undefined' ? '✅ Loaded' : '❌ Not Found'));
+    
+    return 'EMQ Score: ' + score + '/10';
+})();</pre>
+            </div>
+            
+            <div class="steps">
+                <ol start="6">
+                    <li>Press <strong>Enter</strong></li>
+                    <li>See your EMQ score and what data is being collected!</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="warning">
+            <strong>⚠️ Note:</strong> This tool only READS existing data from your website. It doesn't modify anything or send data anywhere. It simply checks what's available for Facebook to use for matching.
+        </div>
+        
+        <h3 style="margin: 30px 0 15px; color: #1c1e21;">📈 Score Meanings:</h3>
+        <div class="score-guide">
+            <div class="score-item score-excellent">
+                <strong>8.5-10:</strong> Excellent
+            </div>
+            <div class="score-item score-good">
+                <strong>7.0-8.4:</strong> Good
+            </div>
+            <div class="score-item score-fair">
+                <strong>5.0-6.9:</strong> Fair
+            </div>
+            <div class="score-item score-poor">
+                <strong>Below 5:</strong> Poor
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function openTestWindow() {
+            // Open website in new tab
+            const testWindow = window.open('https://hentarbrezel.com', '_blank');
+            
+            // Show instructions
+            setTimeout(() => {
+                alert('Your website is opening in a new tab.\n\n' +
+                      'Once it loads:\n' +
+                      '1. Right-click on the page\n' +
+                      '2. Select "Inspect"\n' +
+                      '3. Go to "Console" tab\n' +
+                      '4. Paste the code from this page\n' +
+                      '5. Press Enter to see your EMQ score!');
+            }, 500);
+        }
+        
+        function copyCode() {
+            const code = document.getElementById('consoleCode').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Copied!';
+                btn.style.background = '#28a745';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '#48bb78';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
