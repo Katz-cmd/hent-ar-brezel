@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facebook Pixel - Quick Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        .test-button {
+            background: #1877f2;
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s;
+        }
+        .test-button:hover {
+            background: #166fe5;
+            transform: scale(1.05);
+        }
+        .test-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: scale(1);
+        }
+        .status {
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 18px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .status.checking { background: #fff3cd; color: #856404; }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.waiting { background: #d1ecf1; color: #0c5460; }
+        .emoji { font-size: 30px; margin-right: 10px; }
+        .details {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            text-align: left;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .step {
+            margin: 15px 0;
+            padding: 15px;
+            background: #f0f8ff;
+            border-radius: 10px;
+            text-align: left;
+        }
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #1877f2;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        a {
+            color: #1877f2;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .input-group {
+            margin: 20px 0;
+        }
+        input {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            text-align: center;
+        }
+        input:focus {
+            outline: none;
+            border-color: #1877f2;
+        }
+        .check-item {
+            text-align: left;
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+        }
+        .check-icon {
+            display: inline-block;
+            width: 20px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Facebook Pixel Quick Test</h1>
+        
+        <div class="input-group">
+            <input type="text" id="testCode" placeholder="Enter Test Code (e.g., TEST74089)" value="">
+        </div>
+
+        <button class="test-button" onclick="runCompleteTest()" id="testBtn">
+            🧪 Run Complete Test
+        </button>
+
+        <div class="status waiting" id="status">
+            <span class="emoji">⏳</span>
+            <span id="statusText">Ready to test...</span>
+        </div>
+
+        <div id="checkResults" style="display:none;">
+            <div class="check-item">
+                <span class="check-icon" id="check1">⏺️</span>
+                <strong>Browser Pixel:</strong> <span id="result1">Checking...</span>
+            </div>
+            <div class="check-item">
+                <span class="check-icon" id="check2">⏺️</span>
+                <strong>CAPI Worker:</strong> <span id="result2">Checking...</span>
+            </div>
+            <div class="check-item">
+                <span class="check-icon" id="check3">⏺️</span>
+                <strong>Facebook Connection:</strong> <span id="result3">Checking...</span>
+            </div>
+            <div class="check-item">
+                <span class="check-icon" id="check4">⏺️</span>
+                <strong>Event Sent:</strong> <span id="result4">Checking...</span>
+            </div>
+        </div>
+
+        <div class="details" id="details" style="display:none;"></div>
+
+        <div class="step" style="margin-top: 30px;">
+            <span class="step-number">?</span>
+            <strong>After clicking test, check here:</strong><br>
+            <a href="https://business.facebook.com/events_manager/test_events" target="_blank">
+                Facebook Test Events Tab →
+            </a><br>
+            <small>Your event should appear within 2-5 seconds!</small>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const PIXEL_ID = '1452655989058364';
+        const CAPI_ENDPOINT = 'https://capiworker.elhallaoui-mohamed1.workers.dev/';
+        
+        // Load saved test code
+        const savedCode = localStorage.getItem('fb_test_code') || '';
+        document.getElementById('testCode').value = savedCode;
+
+        // Facebook Pixel
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window,document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        
+        fbq('init', PIXEL_ID);
+
+        async function runCompleteTest() {
+            const testCode = document.getElementById('testCode').value.trim();
+            if (!testCode) {
+                alert('Please enter your test code first!\nGet it from Facebook Events Manager > Test events');
+                return;
+            }
+            
+            // Save test code
+            localStorage.setItem('fb_test_code', testCode);
+            
+            // Disable button
+            const btn = document.getElementById('testBtn');
+            btn.disabled = true;
+            
+            // Reset UI
+            document.getElementById('checkResults').style.display = 'block';
+            document.getElementById('details').style.display = 'block';
+            setStatus('checking', 'Running tests...');
+            
+            // Reset all checks
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById(`check${i}`).textContent = '⏺️';
+                document.getElementById(`result${i}`).textContent = 'Checking...';
+            }
+            
+            let details = [];
+            let allPassed = true;
+            
+            // Test 1: Browser Pixel
+            const pixelLoaded = typeof fbq !== 'undefined' && fbq.loaded;
+            document.getElementById('check1').textContent = pixelLoaded ? '✅' : '❌';
+            document.getElementById('result1').textContent = pixelLoaded ? 'Loaded' : 'Not loaded';
+            details.push(`Browser Pixel: ${pixelLoaded ? 'OK' : 'FAILED'}`);
+            if (!pixelLoaded) allPassed = false;
+            
+            // Test 2: CAPI Worker Connection
+            let capiWorking = false;
+            let fbResponse = null;
+            
+            try {
+                const eventId = Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
+                
+                const testPayload = {
+                    event_name: 'TestConnection',
+                    event_time: Math.floor(Date.now() / 1000),
+                    event_id: eventId,
+                    action_source: 'website',
+                    event_source_url: window.location.href,
+                    user_data: {},
+                    custom_data: {
+                        test: true,
+                        value: 123.45,
+                        currency: 'EUR'
+                    },
+                    test_event_code: testCode
+                };
+                
+                const response = await fetch(CAPI_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testPayload)
+                });
+                
+                const result = await response.json();
+                capiWorking = response.ok;
+                fbResponse = result;
+                
+                document.getElementById('check2').textContent = capiWorking ? '✅' : '❌';
+                document.getElementById('result2').textContent = capiWorking ? 'Connected' : `Error: ${result.error || 'Unknown'}`;
+                details.push(`CAPI Worker: ${capiWorking ? 'OK' : 'FAILED'}`);
+                if (!capiWorking) allPassed = false;
+                
+                // Test 3: Facebook Connection
+                if (capiWorking && result.fb_response) {
+                    const fbConnected = result.success && result.fb_response.events_received > 0;
+                    document.getElementById('check3').textContent = fbConnected ? '✅' : '❌';
+                    document.getElementById('result3').textContent = fbConnected ? 
+                        `Received ${result.fb_response.events_received} event(s)` : 
+                        'Not receiving events';
+                    details.push(`Facebook API: ${fbConnected ? 'OK' : 'FAILED'}`);
+                    if (!fbConnected) allPassed = false;
+                } else {
+                    document.getElementById('check3').textContent = '❌';
+                    document.getElementById('result3').textContent = 'Cannot connect';
+                    details.push('Facebook API: FAILED');
+                    allPassed = false;
+                }
+                
+            } catch (error) {
+                document.getElementById('check2').textContent = '❌';
+                document.getElementById('result2').textContent = 'Network error';
+                document.getElementById('check3').textContent = '❌';
+                document.getElementById('result3').textContent = 'Cannot test';
+                details.push(`CAPI Worker: FAILED - ${error.message}`);
+                details.push('Facebook API: SKIPPED');
+                allPassed = false;
+            }
+            
+            // Test 4: Send actual test event
+            if (capiWorking) {
+                try {
+                    const eventId = Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
+                    
+                    const purchasePayload = {
+                        event_name: 'Purchase',
+                        event_time: Math.floor(Date.now() / 1000),
+                        event_id: eventId,
+                        action_source: 'website',
+                        event_source_url: window.location.href,
+                        user_data: {
+                            em: 'test@example.com',
+                            ph: '+33612345678'
+                        },
+                        custom_data: {
+                            value: 99.99,
+                            currency: 'EUR',
+                            content_ids: ['TEST_PRODUCT'],
+                            content_type: 'product'
+                        },
+                        test_event_code: testCode
+                    };
+                    
+                    const response = await fetch(CAPI_ENDPOINT, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(purchasePayload)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    // Also send browser event
+                    fbq('track', 'Purchase', {
+                        value: 99.99,
+                        currency: 'EUR',
+                        content_ids: ['TEST_PRODUCT'],
+                        content_type: 'product',
+                        eventID: eventId
+                    });
+                    
+                    const eventSent = response.ok && result.success;
+                    document.getElementById('check4').textContent = eventSent ? '✅' : '❌';
+                    document.getElementById('result4').textContent = eventSent ? 
+                        'Purchase event sent!' : 'Failed to send';
+                    details.push(`Test Event: ${eventSent ? 'SENT' : 'FAILED'}`);
+                    if (!eventSent) allPassed = false;
+                    
+                } catch (error) {
+                    document.getElementById('check4').textContent = '❌';
+                    document.getElementById('result4').textContent = 'Error';
+                    details.push(`Test Event: FAILED - ${error.message}`);
+                    allPassed = false;
+                }
+            } else {
+                document.getElementById('check4').textContent = '⏭️';
+                document.getElementById('result4').textContent = 'Skipped';
+                details.push('Test Event: SKIPPED');
+            }
+            
+            // Update details
+            document.getElementById('details').innerHTML = details.join('\n') + 
+                '\n\nTest Code: ' + testCode +
+                '\nTimestamp: ' + new Date().toISOString() +
+                (fbResponse ? '\n\nFacebook Response:\n' + JSON.stringify(fbResponse, null, 2) : '');
+            
+            // Final status
+            if (allPassed) {
+                setStatus('success', '✅ All tests passed! Check Facebook now!');
+            } else if (capiWorking) {
+                setStatus('error', '⚠️ Some issues detected, but CAPI is working');
+            } else {
+                setStatus('error', '❌ CAPI not working - check worker deployment');
+            }
+            
+            // Re-enable button
+            btn.disabled = false;
+        }
+        
+        function setStatus(type, text) {
+            const statusDiv = document.getElementById('status');
+            const statusText = document.getElementById('statusText');
+            
+            statusDiv.className = 'status ' + type;
+            statusText.textContent = text;
+            
+            if (type === 'success') {
+                statusDiv.innerHTML = '<span class="emoji">✅</span>' + 
+                    '<span>' + text + '</span>';
+            } else if (type === 'error') {
+                statusDiv.innerHTML = '<span class="emoji">❌</span>' + 
+                    '<span>' + text + '</span>';
+            } else if (type === 'checking') {
+                statusDiv.innerHTML = '<span class="emoji">🔄</span>' + 
+                    '<span>' + text + '</span>';
+            }
+        }
+    </script>
+</body>
+</html>
