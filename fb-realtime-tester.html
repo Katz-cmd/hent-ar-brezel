@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facebook CAPI Real-Time Tester</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .panel {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        h1 { color: #333; margin-bottom: 10px; }
+        h2 { 
+            color: #667eea; 
+            margin-bottom: 15px; 
+            padding-bottom: 10px; 
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status-success { background: #d4edda; color: #155724; }
+        .status-error { background: #f8d7da; color: #721c24; }
+        .status-warning { background: #fff3cd; color: #856404; }
+        .status-info { background: #d1ecf1; color: #0c5460; }
+        
+        .test-section {
+            margin-bottom: 20px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #218838; }
+        .btn-warning { background: #ffc107; color: #333; }
+        .btn-warning:hover { background: #e0a800; }
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #c82333; }
+        
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin: 10px 0;
+        }
+        .response-viewer {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .event-item {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+        .timestamp {
+            color: #666;
+            font-size: 12px;
+        }
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .checklist {
+            background: #f0f8ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .checklist-item {
+            padding: 5px 0;
+            display: flex;
+            align-items: center;
+        }
+        .check-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .tab {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .info-box {
+            background: #e8f4fd;
+            border: 1px solid #b8daff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .info-box h3 {
+            color: #004085;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Facebook CAPI Real-Time Tester 
+                <span class="status-badge status-info">Advanced Testing Mode</span>
+            </h1>
+            <p>Test and verify Facebook server events in real-time with immediate feedback</p>
+        </div>
+
+        <div class="grid">
+            <!-- Configuration Panel -->
+            <div class="panel">
+                <h2>⚙️ Configuration</h2>
+                <div class="input-group">
+                    <label>Pixel ID</label>
+                    <input type="text" id="pixelId" value="1452655989058364">
+                </div>
+                <div class="input-group">
+                    <label>CAPI Endpoint</label>
+                    <input type="text" id="capiEndpoint" value="https://capiworker.elhallaoui-mohamed1.workers.dev/">
+                </div>
+                <div class="input-group">
+                    <label>Test Event Code (Get from Events Manager)</label>
+                    <input type="text" id="testEventCode" placeholder="TEST12345">
+                </div>
+                <button onclick="saveConfig()" class="btn-success">💾 Save Configuration</button>
+
+                <div class="info-box">
+                    <h3>🔑 How to get Test Event Code:</h3>
+                    <ol>
+                        <li>Go to Facebook Events Manager</li>
+                        <li>Select your pixel (1452655989058364)</li>
+                        <li>Click "Test events" tab</li>
+                        <li>Copy the code under "Test server events"</li>
+                        <li>Paste it above</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Quick Status Panel -->
+            <div class="panel">
+                <h2>📊 Connection Status</h2>
+                <div id="connectionStatus">
+                    <div class="checklist">
+                        <div class="checklist-item">
+                            <span class="check-icon" id="check-pixel">⏺️</span>
+                            <span>Browser Pixel: <span id="pixel-status">Checking...</span></span>
+                        </div>
+                        <div class="checklist-item">
+                            <span class="check-icon" id="check-capi">⏺️</span>
+                            <span>CAPI Worker: <span id="capi-status">Checking...</span></span>
+                        </div>
+                        <div class="checklist-item">
+                            <span class="check-icon" id="check-test">⏺️</span>
+                            <span>Test Mode: <span id="test-status">Not configured</span></span>
+                        </div>
+                        <div class="checklist-item">
+                            <span class="check-icon" id="check-cookies">⏺️</span>
+                            <span>FB Cookies: <span id="cookie-status">Checking...</span></span>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="checkAllConnections()" class="btn-warning">🔄 Refresh Status</button>
+            </div>
+
+            <!-- Test Events Panel -->
+            <div class="panel full-width">
+                <h2>🧪 Test Events</h2>
+                
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('quick')">Quick Tests</button>
+                    <button class="tab" onclick="switchTab('custom')">Custom Event</button>
+                    <button class="tab" onclick="switchTab('batch')">Batch Test</button>
+                    <button class="tab" onclick="switchTab('user')">User Data Test</button>
+                </div>
+
+                <!-- Quick Tests Tab -->
+                <div id="tab-quick" class="tab-content active">
+                    <div class="test-section">
+                        <h3>Standard E-commerce Events</h3>
+                        <button onclick="testEvent('PageView')">📄 PageView</button>
+                        <button onclick="testEvent('ViewContent')">👁️ ViewContent</button>
+                        <button onclick="testEvent('AddToCart')">🛒 AddToCart</button>
+                        <button onclick="testEvent('InitiateCheckout')">💳 InitiateCheckout</button>
+                        <button onclick="testEvent('Purchase')">💰 Purchase</button>
+                        <button onclick="testEvent('Lead')">📧 Lead</button>
+                    </div>
+                    <div class="test-section">
+                        <h3>Advanced Tests</h3>
+                        <button onclick="testDuplicateEvent()" class="btn-warning">🔄 Test Deduplication</button>
+                        <button onclick="testWithUserData()" class="btn-success">👤 Test with User Data</button>
+                        <button onclick="testBatchEvents()" class="btn-success">📦 Test Batch Events</button>
+                    </div>
+                </div>
+
+                <!-- Custom Event Tab -->
+                <div id="tab-custom" class="tab-content">
+                    <div class="input-group">
+                        <label>Event Name</label>
+                        <input type="text" id="customEventName" placeholder="CustomEvent">
+                    </div>
+                    <div class="input-group">
+                        <label>Custom Parameters (JSON)</label>
+                        <textarea id="customParams" rows="5" placeholder='{"value": 100, "currency": "EUR"}'>{
+  "value": 100,
+  "currency": "EUR",
+  "content_ids": ["PROD_001"],
+  "content_type": "product"
+}</textarea>
+                    </div>
+                    <button onclick="sendCustomEvent()">🚀 Send Custom Event</button>
+                </div>
+
+                <!-- Batch Test Tab -->
+                <div id="tab-batch" class="tab-content">
+                    <h3>Send Multiple Events at Once</h3>
+                    <p>This tests the batch processing capability of your CAPI implementation.</p>
+                    <div class="input-group">
+                        <label>Number of Events</label>
+                        <input type="number" id="batchSize" value="5" min="1" max="20">
+                    </div>
+                    <button onclick="sendBatchEvents()">📦 Send Batch</button>
+                </div>
+
+                <!-- User Data Test Tab -->
+                <div id="tab-user" class="tab-content">
+                    <h3>Test with User Data (Will be hashed by worker)</h3>
+                    <div class="input-group">
+                        <label>Email</label>
+                        <input type="email" id="testEmail" placeholder="user@example.com">
+                    </div>
+                    <div class="input-group">
+                        <label>Phone</label>
+                        <input type="tel" id="testPhone" placeholder="+1234567890">
+                    </div>
+                    <div class="input-group">
+                        <label>External ID</label>
+                        <input type="text" id="testExternalId" placeholder="USER_123">
+                    </div>
+                    <button onclick="sendEventWithUserData()">👤 Send with User Data</button>
+                </div>
+            </div>
+
+            <!-- Response Viewer -->
+            <div class="panel">
+                <h2>📥 Browser Events</h2>
+                <div class="response-viewer" id="browserEvents"></div>
+            </div>
+
+            <!-- CAPI Response Viewer -->
+            <div class="panel">
+                <h2>📤 CAPI Responses</h2>
+                <div class="response-viewer" id="capiResponses"></div>
+            </div>
+
+            <!-- Facebook Events Manager Guide -->
+            <div class="panel full-width">
+                <h2>✅ How to Verify in Facebook Events Manager</h2>
+                <div class="checklist">
+                    <h3>Real-Time Verification (With Test Event Code):</h3>
+                    <ol>
+                        <li>Open <a href="https://business.facebook.com/events_manager/test_events" target="_blank">Facebook Test Events</a></li>
+                        <li>Select your pixel: <strong>1452655989058364</strong></li>
+                        <li>Look for events appearing in the "Server" column</li>
+                        <li>Events should appear within <strong>2-5 seconds</strong> with test code</li>
+                        <li>Check the "Event Deduplication" status (should show "Deduplicated")</li>
+                    </ol>
+                    
+                    <h3>Production Verification (Without Test Code):</h3>
+                    <ol>
+                        <li>Go to Events Manager > <a href="https://business.facebook.com/events_manager" target="_blank">Overview</a></li>
+                        <li>Look at "Recent Activity" (may take 5-20 minutes)</li>
+                        <li>Check "Diagnostics" tab for any warnings</li>
+                        <li>View "Event Matching Quality" for match rates</li>
+                    </ol>
+                    
+                    <h3>What to Look For:</h3>
+                    <ul>
+                        <li>✅ <strong>Event Match Quality</strong>: Should be "Good" or "Great"</li>
+                        <li>✅ <strong>Server Events</strong>: Should show count > 0</li>
+                        <li>✅ <strong>Deduplication</strong>: Events should be marked as deduplicated</li>
+                        <li>✅ <strong>Parameters Received</strong>: All custom data should be visible</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Facebook Pixel -->
+    <script>
+        // Configuration
+        window.FB_CONFIG = {
+            pixelId: localStorage.getItem('test_pixelId') || '1452655989058364',
+            capiEndpoint: localStorage.getItem('test_capiEndpoint') || 'https://capiworker.elhallaoui-mohamed1.workers.dev/',
+            testEventCode: localStorage.getItem('test_testEventCode') || '',
+            debug: true
+        };
+
+        // Update UI with saved config
+        document.getElementById('pixelId').value = window.FB_CONFIG.pixelId;
+        document.getElementById('capiEndpoint').value = window.FB_CONFIG.capiEndpoint;
+        document.getElementById('testEventCode').value = window.FB_CONFIG.testEventCode;
+
+        // Load Facebook Pixel
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window,document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        
+        fbq('init', window.FB_CONFIG.pixelId);
+    </script>
+
+    <script>
+        // Event tracking
+        const browserEventLog = [];
+        const capiResponseLog = [];
+
+        // Helper functions
+        function generateEventId() {
+            return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
+        }
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        function logBrowserEvent(eventName, params) {
+            const event = {
+                timestamp: new Date().toISOString(),
+                eventName,
+                params,
+                eventId: params.eventID || 'N/A'
+            };
+            browserEventLog.unshift(event);
+            updateBrowserEventDisplay();
+        }
+
+        function logCapiResponse(eventName, response, success) {
+            const log = {
+                timestamp: new Date().toISOString(),
+                eventName,
+                response,
+                success
+            };
+            capiResponseLog.unshift(log);
+            updateCapiResponseDisplay();
+        }
+
+        function updateBrowserEventDisplay() {
+            const container = document.getElementById('browserEvents');
+            container.innerHTML = browserEventLog.slice(0, 10).map(event => `
+                <div class="event-item">
+                    <strong>${event.eventName}</strong>
+                    <span class="timestamp">${new Date(event.timestamp).toLocaleTimeString()}</span>
+                    <div class="code-block">${JSON.stringify(event.params, null, 2)}</div>
+                </div>
+            `).join('');
+        }
+
+        function updateCapiResponseDisplay() {
+            const container = document.getElementById('capiResponses');
+            container.innerHTML = capiResponseLog.slice(0, 10).map(log => `
+                <div class="event-item">
+                    <strong>${log.eventName}</strong>
+                    <span class="status-badge ${log.success ? 'status-success' : 'status-error'}">
+                        ${log.success ? 'SUCCESS' : 'FAILED'}
+                    </span>
+                    <span class="timestamp">${new Date(log.timestamp).toLocaleTimeString()}</span>
+                    <div class="code-block">${JSON.stringify(log.response, null, 2)}</div>
+                </div>
+            `).join('');
+        }
+
+        // Override fbq to capture events
+        const originalFbq = window.fbq;
+        window.fbq = function() {
+            const [command, eventName, params] = arguments;
+            if (command === 'track' || command === 'trackCustom') {
+                logBrowserEvent(eventName, params || {});
+            }
+            return originalFbq.apply(this, arguments);
+        };
+        Object.keys(originalFbq).forEach(key => {
+            window.fbq[key] = originalFbq[key];
+        });
+
+        // CAPI Direct Call
+        async function sendToCapiDirect(eventName, parameters = {}, userData = {}) {
+            const eventId = generateEventId();
+            
+            // Get Facebook cookies
+            const fbc = getCookie('_fbc') || localStorage.getItem('_fbc');
+            const fbp = getCookie('_fbp') || localStorage.getItem('_fbp');
+            
+            const payload = {
+                event_name: eventName,
+                event_time: Math.floor(Date.now() / 1000),
+                event_id: eventId,
+                action_source: 'website',
+                event_source_url: window.location.href,
+                user_data: {
+                    ...userData,
+                    fbc: fbc,
+                    fbp: fbp
+                },
+                custom_data: parameters
+            };
+
+            // Add test event code if configured
+            if (window.FB_CONFIG.testEventCode) {
+                payload.test_event_code = window.FB_CONFIG.testEventCode;
+            }
+
+            try {
+                const response = await fetch(window.FB_CONFIG.capiEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                logCapiResponse(eventName, result, response.ok);
+                
+                // Also fire browser event with same ID for deduplication
+                fbq('track', eventName, { ...parameters, eventID: eventId });
+                
+                return result;
+            } catch (error) {
+                logCapiResponse(eventName, { error: error.message }, false);
+                throw error;
+            }
+        }
+
+        // Test Functions
+        async function testEvent(eventName) {
+            const params = {
+                value: Math.floor(Math.random() * 200) + 50,
+                currency: 'EUR',
+                content_ids: ['TEST_' + Date.now()],
+                content_type: 'product'
+            };
+            
+            await sendToCapiDirect(eventName, params);
+        }
+
+        async function testDuplicateEvent() {
+            const eventId = generateEventId();
+            const params = {
+                value: 99.99,
+                currency: 'EUR',
+                test_type: 'deduplication'
+            };
+            
+            // Send to CAPI
+            const payload = {
+                event_name: 'TestDeduplication',
+                event_time: Math.floor(Date.now() / 1000),
+                event_id: eventId,
+                action_source: 'website',
+                event_source_url: window.location.href,
+                user_data: {},
+                custom_data: params
+            };
+            
+            if (window.FB_CONFIG.testEventCode) {
+                payload.test_event_code = window.FB_CONFIG.testEventCode;
+            }
+            
+            // Send twice with same event ID
+            const response1 = await fetch(window.FB_CONFIG.capiEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            const response2 = await fetch(window.FB_CONFIG.capiEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            const result1 = await response1.json();
+            const result2 = await response2.json();
+            
+            logCapiResponse('Deduplication Test 1', result1, response1.ok);
+            logCapiResponse('Deduplication Test 2 (Should be deduplicated)', result2, response2.ok);
+            
+            // Also send browser event with same ID
+            fbq('track', 'TestDeduplication', { ...params, eventID: eventId });
+        }
+
+        async function testWithUserData() {
+            const userData = {
+                em: 'test@example.com', // Will be hashed by worker
+                ph: '+1234567890', // Will be hashed by worker
+                external_id: 'USER_TEST_123' // Will be hashed by worker
+            };
+            
+            await sendToCapiDirect('TestWithUserData', {
+                value: 150,
+                currency: 'EUR'
+            }, userData);
+        }
+
+        async function testBatchEvents() {
+            const events = [];
+            for (let i = 0; i < 3; i++) {
+                events.push({
+                    event_name: `BatchEvent_${i}`,
+                    event_time: Math.floor(Date.now() / 1000),
+                    event_id: generateEventId(),
+                    action_source: 'website',
+                    event_source_url: window.location.href,
+                    user_data: {},
+                    custom_data: {
+                        batch_index: i,
+                        value: (i + 1) * 50,
+                        currency: 'EUR'
+                    }
+                });
+            }
+            
+            const payload = {
+                data: events
+            };
+            
+            if (window.FB_CONFIG.testEventCode) {
+                payload.test_event_code = window.FB_CONFIG.testEventCode;
+            }
+            
+            try {
+                const response = await fetch(window.FB_CONFIG.capiEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                logCapiResponse('Batch Events', result, response.ok);
+            } catch (error) {
+                logCapiResponse('Batch Events', { error: error.message }, false);
+            }
+        }
+
+        async function sendCustomEvent() {
+            const eventName = document.getElementById('customEventName').value || 'CustomEvent';
+            let params = {};
+            
+            try {
+                params = JSON.parse(document.getElementById('customParams').value);
+            } catch (e) {
+                alert('Invalid JSON in custom parameters');
+                return;
+            }
+            
+            await sendToCapiDirect(eventName, params);
+        }
+
+        async function sendBatchEvents() {
+            const size = parseInt(document.getElementById('batchSize').value);
+            const events = [];
+            
+            for (let i = 0; i < size; i++) {
+                events.push({
+                    event_name: `BatchTest_${i}`,
+                    event_time: Math.floor(Date.now() / 1000) + i,
+                    event_id: generateEventId(),
+                    action_source: 'website',
+                    event_source_url: window.location.href,
+                    user_data: {},
+                    custom_data: {
+                        index: i,
+                        value: Math.random() * 100,
+                        currency: 'EUR'
+                    }
+                });
+            }
+            
+            const payload = { data: events };
+            if (window.FB_CONFIG.testEventCode) {
+                payload.test_event_code = window.FB_CONFIG.testEventCode;
+            }
+            
+            try {
+                const response = await fetch(window.FB_CONFIG.capiEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                logCapiResponse(`Batch (${size} events)`, result, response.ok);
+            } catch (error) {
+                logCapiResponse(`Batch (${size} events)`, { error: error.message }, false);
+            }
+        }
+
+        async function sendEventWithUserData() {
+            const userData = {
+                em: document.getElementById('testEmail').value,
+                ph: document.getElementById('testPhone').value,
+                external_id: document.getElementById('testExternalId').value
+            };
+            
+            // Remove empty values
+            Object.keys(userData).forEach(key => {
+                if (!userData[key]) delete userData[key];
+            });
+            
+            await sendToCapiDirect('TestUserData', {
+                value: 200,
+                currency: 'EUR',
+                content_ids: ['USER_DATA_TEST']
+            }, userData);
+        }
+
+        // Connection Status Checks
+        async function checkAllConnections() {
+            // Check pixel
+            const pixelLoaded = typeof fbq !== 'undefined' && fbq.loaded;
+            document.getElementById('pixel-status').textContent = pixelLoaded ? 'Connected' : 'Not loaded';
+            document.getElementById('check-pixel').textContent = pixelLoaded ? '✅' : '❌';
+            
+            // Check CAPI
+            try {
+                const testPayload = {
+                    event_name: 'ConnectionTest',
+                    event_time: Math.floor(Date.now() / 1000),
+                    event_id: generateEventId(),
+                    action_source: 'website',
+                    event_source_url: window.location.href,
+                    user_data: {},
+                    custom_data: { test: true }
+                };
+                
+                if (window.FB_CONFIG.testEventCode) {
+                    testPayload.test_event_code = window.FB_CONFIG.testEventCode;
+                }
+                
+                const response = await fetch(window.FB_CONFIG.capiEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testPayload)
+                });
+                
+                const capiConnected = response.ok;
+                document.getElementById('capi-status').textContent = capiConnected ? 'Connected' : 'Error';
+                document.getElementById('check-capi').textContent = capiConnected ? '✅' : '❌';
+            } catch (error) {
+                document.getElementById('capi-status').textContent = 'Offline';
+                document.getElementById('check-capi').textContent = '❌';
+            }
+            
+            // Check test mode
+            const hasTestCode = !!window.FB_CONFIG.testEventCode;
+            document.getElementById('test-status').textContent = hasTestCode ? 'Configured' : 'Not configured';
+            document.getElementById('check-test').textContent = hasTestCode ? '✅' : '⚠️';
+            
+            // Check cookies
+            const fbp = getCookie('_fbp');
+            const fbc = getCookie('_fbc');
+            const hasCookies = !!(fbp || fbc);
+            document.getElementById('cookie-status').textContent = hasCookies ? 
+                `Found (fbp: ${!!fbp}, fbc: ${!!fbc})` : 'Not found';
+            document.getElementById('check-cookies').textContent = hasCookies ? '✅' : '⚠️';
+        }
+
+        // Tab switching
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        }
+
+        // Save configuration
+        function saveConfig() {
+            window.FB_CONFIG.pixelId = document.getElementById('pixelId').value;
+            window.FB_CONFIG.capiEndpoint = document.getElementById('capiEndpoint').value;
+            window.FB_CONFIG.testEventCode = document.getElementById('testEventCode').value;
+            
+            localStorage.setItem('test_pixelId', window.FB_CONFIG.pixelId);
+            localStorage.setItem('test_capiEndpoint', window.FB_CONFIG.capiEndpoint);
+            localStorage.setItem('test_testEventCode', window.FB_CONFIG.testEventCode);
+            
+            alert('Configuration saved! Refreshing page to apply changes...');
+            location.reload();
+        }
+
+        // Initial status check
+        window.addEventListener('load', () => {
+            setTimeout(checkAllConnections, 1000);
+        });
+    </script>
+</body>
+</html>

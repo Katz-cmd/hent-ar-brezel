@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facebook Events Quick Verifier</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #1877f2; }
+        .step {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 4px solid #1877f2;
+        }
+        .step h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        button {
+            background: #1877f2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #166fe5;
+        }
+        .success { color: #28a745; font-weight: bold; }
+        .error { color: #dc3545; font-weight: bold; }
+        .warning { color: #ffc107; font-weight: bold; }
+        .code {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .result {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background: #e8f4fd;
+            border: 1px solid #b8daff;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .links {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .links a {
+            color: #1877f2;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Facebook Events Quick Verifier</h1>
+        <p>This tool helps you verify that Facebook is receiving your events correctly with minimal latency.</p>
+
+        <div class="step">
+            <h2>Step 1: Get Your Test Event Code</h2>
+            <p>This is REQUIRED for real-time verification (2-5 seconds latency)</p>
+            <ol>
+                <li>Open <a href="https://business.facebook.com/events_manager/test_events" target="_blank">Facebook Test Events</a></li>
+                <li>Select pixel: <strong>1452655989058364</strong></li>
+                <li>Copy the "Test server events code"</li>
+                <li>Paste it here:</li>
+            </ol>
+            <input type="text" id="testCode" placeholder="TEST12345" value="">
+            <button onclick="saveTestCode()">Save Test Code</button>
+            <div id="testCodeStatus"></div>
+        </div>
+
+        <div class="step">
+            <h2>Step 2: Send Test Events</h2>
+            <p>Click these buttons and watch them appear in Facebook Events Manager within 2-5 seconds:</p>
+            
+            <h3>Quick Test (No parameters)</h3>
+            <button onclick="sendSimpleTest()">📍 Send Simple Test Event</button>
+            
+            <h3>E-commerce Event (With all data)</h3>
+            <button onclick="sendPurchaseTest()">💰 Send Purchase Event</button>
+            
+            <h3>With User Data (Tests matching)</h3>
+            <button onclick="sendUserDataTest()">👤 Send Event with User Data</button>
+            
+            <div id="eventResults"></div>
+        </div>
+
+        <div class="step">
+            <h2>Step 3: Verify in Facebook</h2>
+            <div class="links">
+                <p><strong>Check these locations IN THIS ORDER:</strong></p>
+                <ol>
+                    <li>
+                        <a href="https://business.facebook.com/events_manager/test_events" target="_blank">
+                            Test Events Tab
+                        </a> - Events appear here in 2-5 seconds with test code
+                    </li>
+                    <li>
+                        <a href="https://business.facebook.com/events_manager" target="_blank">
+                            Events Manager Overview
+                        </a> - Production events (5-20 minutes delay)
+                    </li>
+                    <li>
+                        <a href="https://business.facebook.com/events_manager/diagnostics" target="_blank">
+                            Diagnostics Tab
+                        </a> - Check for any warnings
+                    </li>
+                </ol>
+            </div>
+
+            <h3>What You Should See:</h3>
+            <ul>
+                <li>✅ Events appearing in "Server" column</li>
+                <li>✅ "Received from: Server and Browser" (if deduplication works)</li>
+                <li>✅ All custom parameters visible when you click the event</li>
+                <li>✅ Event match quality indicators</li>
+                <li>✅ No error messages in diagnostics</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <h2>Live Response Monitor</h2>
+            <div id="responseMonitor" class="code">Responses will appear here...</div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const PIXEL_ID = '1452655989058364';
+        const CAPI_ENDPOINT = 'https://capiworker.elhallaoui-mohamed1.workers.dev/';
+        let TEST_CODE = localStorage.getItem('fb_test_code') || '';
+        
+        // Load saved test code
+        document.getElementById('testCode').value = TEST_CODE;
+        if (TEST_CODE) {
+            document.getElementById('testCodeStatus').innerHTML = 
+                '<span class="success">✓ Test code saved</span>';
+        }
+
+        // Facebook Pixel
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window,document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        
+        fbq('init', PIXEL_ID);
+        fbq('track', 'PageView');
+
+        function saveTestCode() {
+            TEST_CODE = document.getElementById('testCode').value;
+            localStorage.setItem('fb_test_code', TEST_CODE);
+            document.getElementById('testCodeStatus').innerHTML = 
+                '<span class="success">✓ Test code saved! Now send test events.</span>';
+        }
+
+        function logResponse(eventName, response, success) {
+            const monitor = document.getElementById('responseMonitor');
+            const timestamp = new Date().toLocaleTimeString();
+            const status = success ? '✅ SUCCESS' : '❌ FAILED';
+            
+            monitor.innerHTML = `[${timestamp}] ${status} - ${eventName}\n${JSON.stringify(response, null, 2)}\n\n` + 
+                               monitor.innerHTML;
+        }
+
+        function showResult(message, type = 'success') {
+            const results = document.getElementById('eventResults');
+            const className = type === 'success' ? 'success' : 'error';
+            results.innerHTML = `<div class="result"><span class="${className}">${message}</span></div>`;
+        }
+
+        async function sendEvent(eventName, customData = {}, userData = {}) {
+            if (!TEST_CODE) {
+                showResult('⚠️ Please enter a test event code first!', 'error');
+                return;
+            }
+
+            const eventId = Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
+            
+            // Prepare payload
+            const payload = {
+                event_name: eventName,
+                event_time: Math.floor(Date.now() / 1000),
+                event_id: eventId,
+                action_source: 'website',
+                event_source_url: window.location.href,
+                user_data: userData,
+                custom_data: customData,
+                test_event_code: TEST_CODE
+            };
+
+            try {
+                // Send to CAPI
+                const response = await fetch(CAPI_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                
+                // Also send browser event with same ID for deduplication
+                fbq('track', eventName, { ...customData, eventID: eventId });
+                
+                logResponse(eventName, result, response.ok);
+                
+                if (response.ok) {
+                    showResult(`✅ ${eventName} sent successfully! Check Facebook Test Events now.`, 'success');
+                } else {
+                    showResult(`❌ Error sending ${eventName}. Check response below.`, 'error');
+                }
+                
+                return result;
+            } catch (error) {
+                logResponse(eventName, { error: error.message }, false);
+                showResult(`❌ Network error: ${error.message}`, 'error');
+            }
+        }
+
+        async function sendSimpleTest() {
+            await sendEvent('TestEvent', {
+                test_type: 'simple',
+                timestamp: Date.now()
+            });
+        }
+
+        async function sendPurchaseTest() {
+            await sendEvent('Purchase', {
+                value: 99.99,
+                currency: 'EUR',
+                content_ids: ['PROD_001', 'PROD_002'],
+                content_type: 'product',
+                content_name: 'Test Purchase',
+                num_items: 2,
+                contents: [
+                    { id: 'PROD_001', quantity: 1, item_price: 49.99 },
+                    { id: 'PROD_002', quantity: 1, item_price: 50.00 }
+                ]
+            });
+        }
+
+        async function sendUserDataTest() {
+            await sendEvent('CompleteRegistration', {
+                value: 0,
+                currency: 'EUR',
+                status: 'completed'
+            }, {
+                em: 'test@example.com', // Will be hashed by worker
+                ph: '+33612345678', // Will be hashed by worker
+                fn: 'john', // Will be hashed by worker
+                ln: 'doe', // Will be hashed by worker
+                ct: 'paris', // Will be hashed by worker
+                st: 'idf', // Will be hashed by worker
+                zp: '75001', // Will be hashed by worker
+                country: 'fr' // Will be hashed by worker
+            });
+        }
+
+        // Auto-check on load
+        window.addEventListener('load', () => {
+            if (!TEST_CODE) {
+                document.getElementById('testCodeStatus').innerHTML = 
+                    '<span class="warning">⚠️ No test code configured. You must add one for real-time testing!</span>';
+            }
+        });
+    </script>
+</body>
+</html>
