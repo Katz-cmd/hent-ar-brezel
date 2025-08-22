@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMQ Bookmarklet - Test Any Website</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f0f2f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1877f2;
+            margin-bottom: 20px;
+        }
+        .bookmarklet-btn {
+            display: inline-block;
+            background: #1877f2;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 20px 0;
+            cursor: move;
+        }
+        .bookmarklet-btn:hover {
+            background: #166fe5;
+        }
+        .instructions {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .instructions h2 {
+            margin-top: 0;
+            color: #1877f2;
+        }
+        .instructions ol {
+            margin-left: 20px;
+        }
+        .instructions li {
+            margin: 10px 0;
+        }
+        .warning {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #ffc107;
+            margin: 20px 0;
+        }
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Facebook EMQ Live Website Checker</h1>
+        
+        <p><strong>This bookmarklet lets you check the Event Match Quality on ANY website, including your live production site!</strong></p>
+        
+        <div class="instructions">
+            <h2>📋 How to Use:</h2>
+            <ol>
+                <li><strong>Drag this button to your bookmarks bar:</strong></li>
+            </ol>
+        </div>
+        
+        <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+            <a href="javascript:(function(){var s=document.createElement('script');s.innerHTML=`
+(function() {
+    if (window.EMQ_CHECKER_ACTIVE) {
+        alert('EMQ Checker is already running!');
+        return;
+    }
+    window.EMQ_CHECKER_ACTIVE = true;
+
+    const style = document.createElement('style');
+    style.innerHTML = \`
+        #emq-checker-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 400px;
+            max-height: 80vh;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 999999;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow: auto;
+        }
+        #emq-checker-panel * {
+            box-sizing: border-box;
+        }
+        #emq-checker-header {
+            background: #1877f2;
+            color: white;
+            padding: 15px;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #emq-checker-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+        }
+        #emq-checker-content {
+            padding: 20px;
+        }
+        .emq-score-display {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .emq-score-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .emq-score-excellent { background: #16a085; }
+        .emq-score-great { background: #27ae60; }
+        .emq-score-good { background: #3498db; }
+        .emq-score-fair { background: #f39c12; }
+        .emq-score-poor { background: #e74c3c; }
+        .emq-param-group {
+            margin-bottom: 20px;
+        }
+        .emq-param-group h4 {
+            margin: 0 0 10px 0;
+            color: #1877f2;
+            font-size: 14px;
+        }
+        .emq-param {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            background: #f8f9fa;
+            margin-bottom: 4px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .emq-param.present {
+            background: #d4edda;
+        }
+        .emq-param.missing {
+            background: #f8d7da;
+        }
+        .emq-recommendations {
+            background: #e3f2fd;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+        .emq-recommendations h4 {
+            margin: 0 0 8px 0;
+            color: #1877f2;
+            font-size: 14px;
+        }
+        .emq-recommendations ul {
+            margin: 0;
+            padding-left: 20px;
+            font-size: 12px;
+        }
+    \`;
+    document.head.appendChild(style);
+
+    function getCookie(name) {
+        const value = \`; \${document.cookie}\`;
+        const parts = value.split(\`; \${name}=\`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    }
+
+    function checkEMQ() {
+        const params = {
+            email: localStorage.getItem('user_email') || localStorage.getItem('user_email_hash'),
+            phone: localStorage.getItem('user_phone') || localStorage.getItem('user_phone_hash'),
+            fbp: getCookie('_fbp') || localStorage.getItem('_fbp'),
+            fbc: getCookie('_fbc') || localStorage.getItem('_fbc'),
+            external_id: localStorage.getItem('user_id') || localStorage.getItem('external_id'),
+            fn: localStorage.getItem('user_fn') || localStorage.getItem('user_first_name'),
+            ln: localStorage.getItem('user_ln') || localStorage.getItem('user_last_name'),
+            ge: localStorage.getItem('user_ge') || localStorage.getItem('user_gender'),
+            db: localStorage.getItem('user_db') || localStorage.getItem('user_dob'),
+            ct: localStorage.getItem('user_ct') || localStorage.getItem('user_city'),
+            st: localStorage.getItem('user_st') || localStorage.getItem('user_state'),
+            zp: localStorage.getItem('user_zp') || localStorage.getItem('user_zip'),
+            country: localStorage.getItem('user_country')
+        };
+
+        let score = 0;
+        let critical = 0;
+        let recommendations = [];
+
+        // Critical parameters (1.5 points each)
+        if (params.email) { score += 1.5; critical++; } else { recommendations.push('Add email collection'); }
+        if (params.phone) { score += 1.5; critical++; } else { recommendations.push('Add phone collection'); }
+        if (params.fbp) { score += 1.5; critical++; } else { recommendations.push('Facebook Pixel not setting _fbp cookie'); }
+        if (params.fbc) { score += 1.5; critical++; } else { recommendations.push('Capture _fbc from ad clicks'); }
+        if (params.external_id) { score += 1.5; critical++; } else { recommendations.push('Set external_id for users'); }
+
+        // Important parameters (0.4 points each)
+        if (params.fn) score += 0.4;
+        if (params.ln) score += 0.4;
+        if (params.ge) score += 0.4;
+        if (params.db) score += 0.4;
+
+        // Additional parameters (0.1 points each)
+        if (params.ct) score += 0.1;
+        if (params.st) score += 0.1;
+        if (params.zp) score += 0.1;
+        if (params.country) score += 0.1;
+
+        score = Math.min(10, score);
+
+        return { score: score.toFixed(1), params, recommendations, critical };
+    }
+
+    const result = checkEMQ();
+    
+    const panel = document.createElement('div');
+    panel.id = 'emq-checker-panel';
+    
+    let scoreClass = 'emq-score-poor';
+    let scoreText = 'Poor';
+    if (result.score >= 8.5) { scoreClass = 'emq-score-excellent'; scoreText = 'Excellent'; }
+    else if (result.score >= 7) { scoreClass = 'emq-score-great'; scoreText = 'Great'; }
+    else if (result.score >= 5) { scoreClass = 'emq-score-good'; scoreText = 'Good'; }
+    else if (result.score >= 3) { scoreClass = 'emq-score-fair'; scoreText = 'Fair'; }
+    
+    panel.innerHTML = \`
+        <div id="emq-checker-header">
+            <strong>📊 EMQ Checker - \${window.location.hostname}</strong>
+            <button id="emq-checker-close">×</button>
+        </div>
+        <div id="emq-checker-content">
+            <div class="emq-score-display">
+                <div class="emq-score-circle \${scoreClass}">\${result.score}/10</div>
+                <div><strong>\${scoreText} Event Match Quality</strong></div>
+            </div>
+            
+            <div class="emq-param-group">
+                <h4>🔴 Critical Parameters (\${result.critical}/5)</h4>
+                <div class="emq-param \${result.params.email ? 'present' : 'missing'}">
+                    <span>Email (em)</span>
+                    <span>\${result.params.email ? '✅' : '❌'}</span>
+                </div>
+                <div class="emq-param \${result.params.phone ? 'present' : 'missing'}">
+                    <span>Phone (ph)</span>
+                    <span>\${result.params.phone ? '✅' : '❌'}</span>
+                </div>
+                <div class="emq-param \${result.params.fbp ? 'present' : 'missing'}">
+                    <span>Facebook Browser ID (_fbp)</span>
+                    <span>\${result.params.fbp ? '✅' : '❌'}</span>
+                </div>
+                <div class="emq-param \${result.params.fbc ? 'present' : 'missing'}">
+                    <span>Facebook Click ID (_fbc)</span>
+                    <span>\${result.params.fbc ? '✅' : '❌'}</span>
+                </div>
+                <div class="emq-param \${result.params.external_id ? 'present' : 'missing'}">
+                    <span>External ID</span>
+                    <span>\${result.params.external_id ? '✅' : '❌'}</span>
+                </div>
+            </div>
+            
+            <div class="emq-param-group">
+                <h4>🟡 Additional Data</h4>
+                <div class="emq-param \${result.params.fn || result.params.ln ? 'present' : 'missing'}">
+                    <span>Name (fn/ln)</span>
+                    <span>\${result.params.fn || result.params.ln ? '✅' : '❌'}</span>
+                </div>
+                <div class="emq-param \${result.params.ge || result.params.db ? 'present' : 'missing'}">
+                    <span>Demographics (ge/db)</span>
+                    <span>\${result.params.ge || result.params.db ? '✅' : '❌'}</span>
+                </div>
+                <div class="emq-param \${result.params.ct || result.params.st || result.params.zp ? 'present' : 'missing'}">
+                    <span>Location (ct/st/zp)</span>
+                    <span>\${result.params.ct || result.params.st || result.params.zp ? '✅' : '❌'}</span>
+                </div>
+            </div>
+            
+            \${result.recommendations.length > 0 ? \`
+                <div class="emq-recommendations">
+                    <h4>📈 Recommendations</h4>
+                    <ul>
+                        \${result.recommendations.map(r => \`<li>\${r}</li>\`).join('')}
+                    </ul>
+                </div>
+            \` : ''}
+            
+            <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 4px; font-size: 11px; color: #666;">
+                <strong>Site:</strong> \${window.location.hostname}<br>
+                <strong>Pixel:</strong> \${typeof fbq !== 'undefined' ? '✅ Loaded' : '❌ Not found'}<br>
+                <strong>Dedup:</strong> \${window.FB_DEDUP_STORAGE || window.FB_EVENTS_SENT ? '✅ Active' : '❌ Not active'}
+            </div>
+        </div>
+    \`;
+    
+    document.body.appendChild(panel);
+    
+    document.getElementById('emq-checker-close').onclick = function() {
+        panel.remove();
+        style.remove();
+        window.EMQ_CHECKER_ACTIVE = false;
+    };
+})();
+`;document.body.appendChild(s);})();" class="bookmarklet-btn">
+                🔍 Check EMQ
+            </a>
+            <p style="margin-top: 10px; color: #666; font-size: 14px;">
+                ↑ Drag this button to your bookmarks bar
+            </p>
+        </div>
+        
+        <div class="instructions">
+            <h2>Then:</h2>
+            <ol start="2">
+                <li><strong>Go to YOUR LIVE WEBSITE</strong> (e.g., https://hent-ar-brezel.com)</li>
+                <li><strong>Click the "Check EMQ" bookmark</strong> you just saved</li>
+                <li><strong>A popup will appear</strong> showing your Event Match Quality score!</li>
+            </ol>
+        </div>
+        
+        <div class="warning">
+            <strong>⚠️ Important:</strong> This checks the ACTUAL data on whatever website you're currently viewing. It reads from localStorage and cookies on that specific domain.
+        </div>
+        
+        <h2>What It Shows:</h2>
+        <ul>
+            <li><strong>EMQ Score (0-10)</strong> - Your Facebook Event Match Quality</li>
+            <li><strong>Critical Parameters</strong> - Email, Phone, _fbp, _fbc, External ID</li>
+            <li><strong>Additional Data</strong> - Names, demographics, location</li>
+            <li><strong>Recommendations</strong> - What's missing for better matching</li>
+            <li><strong>Site Info</strong> - Confirms which domain you're testing</li>
+        </ul>
+        
+        <h2>Alternative: Copy & Paste Method</h2>
+        <p>If you can't drag the bookmarklet, you can:</p>
+        <ol>
+            <li>Create a new bookmark manually</li>
+            <li>Set the name to "Check EMQ"</li>
+            <li>Copy the code below and paste it as the URL:</li>
+        </ol>
+        
+        <div style="background: #f8f9fa; padding: 10px; border-radius: 4px; margin: 10px 0; word-break: break-all; font-size: 12px; font-family: monospace;">
+            <code id="bookmarklet-code">javascript:(function(){var s=document.createElement('script');s.innerHTML=`(function(){if(window.EMQ_CHECKER_ACTIVE){alert('EMQ Checker is already running!');return;}window.EMQ_CHECKER_ACTIVE=true;const style=document.createElement('style');style.innerHTML=\`#emq-checker-panel{position:fixed;top:20px;right:20px;width:400px;max-height:80vh;background:white;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.3);z-index:999999;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;overflow:auto;}#emq-checker-panel *{box-sizing:border-box;}#emq-checker-header{background:#1877f2;color:white;padding:15px;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;align-items:center;}#emq-checker-close{background:none;border:none;color:white;font-size:24px;cursor:pointer;padding:0;width:30px;height:30px;}#emq-checker-content{padding:20px;}.emq-score-display{text-align:center;margin-bottom:20px;}.emq-score-circle{width:100px;height:100px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:white;font-size:28px;font-weight:bold;margin-bottom:10px;}.emq-score-excellent{background:#16a085;}.emq-score-great{background:#27ae60;}.emq-score-good{background:#3498db;}.emq-score-fair{background:#f39c12;}.emq-score-poor{background:#e74c3c;}.emq-param-group{margin-bottom:20px;}.emq-param-group h4{margin:0 0 10px 0;color:#1877f2;font-size:14px;}.emq-param{display:flex;justify-content:space-between;padding:8px;background:#f8f9fa;margin-bottom:4px;border-radius:4px;font-size:13px;}.emq-param.present{background:#d4edda;}.emq-param.missing{background:#f8d7da;}.emq-recommendations{background:#e3f2fd;padding:12px;border-radius:6px;margin-top:15px;}.emq-recommendations h4{margin:0 0 8px 0;color:#1877f2;font-size:14px;}.emq-recommendations ul{margin:0;padding-left:20px;font-size:12px;}\`;document.head.appendChild(style);function getCookie(name){const value=\`; \${document.cookie}\`;const parts=value.split(\`; \${name}=\`);if(parts.length===2)return parts.pop().split(';').shift();return null;}function checkEMQ(){const params={email:localStorage.getItem('user_email')||localStorage.getItem('user_email_hash'),phone:localStorage.getItem('user_phone')||localStorage.getItem('user_phone_hash'),fbp:getCookie('_fbp')||localStorage.getItem('_fbp'),fbc:getCookie('_fbc')||localStorage.getItem('_fbc'),external_id:localStorage.getItem('user_id')||localStorage.getItem('external_id'),fn:localStorage.getItem('user_fn')||localStorage.getItem('user_first_name'),ln:localStorage.getItem('user_ln')||localStorage.getItem('user_last_name'),ge:localStorage.getItem('user_ge')||localStorage.getItem('user_gender'),db:localStorage.getItem('user_db')||localStorage.getItem('user_dob'),ct:localStorage.getItem('user_ct')||localStorage.getItem('user_city'),st:localStorage.getItem('user_st')||localStorage.getItem('user_state'),zp:localStorage.getItem('user_zp')||localStorage.getItem('user_zip'),country:localStorage.getItem('user_country')};let score=0;let critical=0;let recommendations=[];if(params.email){score+=1.5;critical++;}else{recommendations.push('Add email collection');}if(params.phone){score+=1.5;critical++;}else{recommendations.push('Add phone collection');}if(params.fbp){score+=1.5;critical++;}else{recommendations.push('Facebook Pixel not setting _fbp cookie');}if(params.fbc){score+=1.5;critical++;}else{recommendations.push('Capture _fbc from ad clicks');}if(params.external_id){score+=1.5;critical++;}else{recommendations.push('Set external_id for users');}if(params.fn)score+=0.4;if(params.ln)score+=0.4;if(params.ge)score+=0.4;if(params.db)score+=0.4;if(params.ct)score+=0.1;if(params.st)score+=0.1;if(params.zp)score+=0.1;if(params.country)score+=0.1;score=Math.min(10,score);return{score:score.toFixed(1),params,recommendations,critical};}const result=checkEMQ();const panel=document.createElement('div');panel.id='emq-checker-panel';let scoreClass='emq-score-poor';let scoreText='Poor';if(result.score>=8.5){scoreClass='emq-score-excellent';scoreText='Excellent';}else if(result.score>=7){scoreClass='emq-score-great';scoreText='Great';}else if(result.score>=5){scoreClass='emq-score-good';scoreText='Good';}else if(result.score>=3){scoreClass='emq-score-fair';scoreText='Fair';}panel.innerHTML=\`<div id="emq-checker-header"><strong>📊 EMQ Checker - \${window.location.hostname}</strong><button id="emq-checker-close">×</button></div><div id="emq-checker-content"><div class="emq-score-display"><div class="emq-score-circle \${scoreClass}">\${result.score}/10</div><div><strong>\${scoreText} Event Match Quality</strong></div></div><div class="emq-param-group"><h4>🔴 Critical Parameters (\${result.critical}/5)</h4><div class="emq-param \${result.params.email?'present':'missing'}"><span>Email (em)</span><span>\${result.params.email?'✅':'❌'}</span></div><div class="emq-param \${result.params.phone?'present':'missing'}"><span>Phone (ph)</span><span>\${result.params.phone?'✅':'❌'}</span></div><div class="emq-param \${result.params.fbp?'present':'missing'}"><span>Facebook Browser ID (_fbp)</span><span>\${result.params.fbp?'✅':'❌'}</span></div><div class="emq-param \${result.params.fbc?'present':'missing'}"><span>Facebook Click ID (_fbc)</span><span>\${result.params.fbc?'✅':'❌'}</span></div><div class="emq-param \${result.params.external_id?'present':'missing'}"><span>External ID</span><span>\${result.params.external_id?'✅':'❌'}</span></div></div><div class="emq-param-group"><h4>🟡 Additional Data</h4><div class="emq-param \${result.params.fn||result.params.ln?'present':'missing'}"><span>Name (fn/ln)</span><span>\${result.params.fn||result.params.ln?'✅':'❌'}</span></div><div class="emq-param \${result.params.ge||result.params.db?'present':'missing'}"><span>Demographics (ge/db)</span><span>\${result.params.ge||result.params.db?'✅':'❌'}</span></div><div class="emq-param \${result.params.ct||result.params.st||result.params.zp?'present':'missing'}"><span>Location (ct/st/zp)</span><span>\${result.params.ct||result.params.st||result.params.zp?'✅':'❌'}</span></div></div>\${result.recommendations.length>0?\`<div class="emq-recommendations"><h4>📈 Recommendations</h4><ul>\${result.recommendations.map(r=>\`<li>\${r}</li>\`).join('')}</ul></div>\`:''}<div style="margin-top:15px;padding:10px;background:#f8f9fa;border-radius:4px;font-size:11px;color:#666;"><strong>Site:</strong> \${window.location.hostname}<br><strong>Pixel:</strong> \${typeof fbq!=='undefined'?'✅ Loaded':'❌ Not found'}<br><strong>Dedup:</strong> \${window.FB_DEDUP_STORAGE||window.FB_EVENTS_SENT?'✅ Active':'❌ Not active'}</div></div>\`;document.body.appendChild(panel);document.getElementById('emq-checker-close').onclick=function(){panel.remove();style.remove();window.EMQ_CHECKER_ACTIVE=false;};})();`;document.body.appendChild(s);})();</code>
+        </div>
+        
+        <button onclick="navigator.clipboard.writeText(document.getElementById('bookmarklet-code').textContent); alert('Copied to clipboard!');" style="padding: 10px 20px; background: #1877f2; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            📋 Copy Code
+        </button>
+    </div>
+</body>
+</html>
