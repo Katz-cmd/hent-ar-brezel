@@ -198,6 +198,15 @@
 (function(originalFbq){
   window.trackedEvents = window.trackedEvents || new Set();
 
+  function getCapiEndpoint() {
+    const endpoint = window.CAPI_ENDPOINT || 'https://capiworker.elhallaoui-mohamed1.workers.dev';
+    const url = new URL(endpoint);
+    if (window.FB_TEST_EVENT_CODE) {
+      url.searchParams.set('test_event_code', window.FB_TEST_EVENT_CODE);
+    }
+    return url.toString();
+  }
+
   function genEventID() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2);
   }
@@ -244,11 +253,7 @@
       delete capiPayload.data[0].custom_data.event_id;
       delete capiPayload.data[0].custom_data.user_data;
 
-      const endpoint = window.CAPI_ENDPOINT || 'https://capiworker.elhallaoui-mohamed1.workers.dev';
-      const url = new URL(endpoint);
-      if (window.FB_TEST_EVENT_CODE) url.searchParams.set('test_event_code', window.FB_TEST_EVENT_CODE);
-
-      const res = await fetch(url.toString(), {
+      const res = await fetch(getCapiEndpoint(), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(capiPayload),
