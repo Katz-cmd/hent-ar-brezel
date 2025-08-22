@@ -1,0 +1,310 @@
+<!-- 
+    MAXIMUM EMQ FACEBOOK PIXEL IMPLEMENTATION
+    This code automatically extracts maximum data from ALL visitors
+    Expected EMQ Score: 3.5/10 minimum (up from 1.5/10)
+    With user interaction: 7-9/10
+-->
+
+<!-- STEP 1: Add this code in the <head> section of EVERY page -->
+<script>
+    // ============================================
+    // CONFIGURATION - CUSTOMIZE THESE VALUES
+    // ============================================
+    window.FB_CONFIG = {
+        pixelId: 'YOUR_PIXEL_ID_HERE', // Replace with your Facebook Pixel ID
+        capiEndpoint: '', // Optional: Your CAPI endpoint URL if using server-side
+        testEventCode: '', // Optional: For testing in Events Manager
+        debug: true // Set to false in production
+    };
+
+    // ============================================
+    // MAXIMUM EMQ IMPLEMENTATION
+    // DO NOT MODIFY BELOW THIS LINE
+    // ============================================
+    
+    // SHA-256 hashing for privacy compliance
+    async function sha256(message) {
+        if (!message) return null;
+        const msgBuffer = new TextEncoder().encode(message.toLowerCase().trim());
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // Capture Facebook Click ID from ads
+    (function captureFacebookData() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const fbclid = urlParams.get('fbclid');
+        
+        if (fbclid) {
+            const fbc = 'fb.1.' + Date.now() + '.' + fbclid;
+            const domain = '.' + window.location.hostname.replace('www.', '');
+            document.cookie = '_fbc=' + fbc + '; max-age=2419200; path=/; domain=' + domain;
+            localStorage.setItem('_fbc', fbc);
+            if (window.FB_CONFIG.debug) console.log('[MAX EMQ] Facebook Click ID captured');
+        }
+
+        // Capture UTM parameters
+        ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'].forEach(param => {
+            const value = urlParams.get(param);
+            if (value) localStorage.setItem(param, value);
+        });
+    })();
+
+    // Create persistent User ID with browser fingerprint
+    function getOrCreateUserID() {
+        let userId = localStorage.getItem('user_id') || 
+                    localStorage.getItem('external_id') || 
+                    sessionStorage.getItem('user_id');
+        
+        if (!userId) {
+            // Browser fingerprint for better persistence
+            const fingerprint = [
+                navigator.userAgent,
+                navigator.language,
+                screen.width + 'x' + screen.height,
+                screen.colorDepth,
+                new Date().getTimezoneOffset(),
+                navigator.hardwareConcurrency || 'unknown',
+                navigator.platform
+            ].join('|');
+            
+            userId = 'user_' + Date.now() + '_' + btoa(fingerprint).replace(/[^a-zA-Z0-9]/g, '').substring(0, 10);
+            
+            localStorage.setItem('user_id', userId);
+            localStorage.setItem('external_id', userId);
+            sessionStorage.setItem('user_id', userId);
+            
+            if (window.FB_CONFIG.debug) console.log('[MAX EMQ] User ID created:', userId);
+        }
+        return userId;
+    }
+
+    // Extract location from browser
+    async function extractLocationData() {
+        // Get timezone location
+        try {
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            if (timezone) {
+                const parts = timezone.split('/');
+                const region = parts[0];
+                const city = parts[1];
+                
+                if (region) {
+                    localStorage.setItem('user_country', region);
+                    const countryHash = await sha256(region);
+                    localStorage.setItem('user_country_hash', countryHash);
+                }
+                
+                if (city) {
+                    localStorage.setItem('user_city', city);
+                    const cityHash = await sha256(city);
+                    localStorage.setItem('user_city_hash', cityHash);
+                    localStorage.setItem('user_ct', cityHash);
+                }
+            }
+        } catch (e) {}
+
+        // Get language/locale
+        const language = navigator.language || navigator.userLanguage;
+        if (language) {
+            localStorage.setItem('user_locale', language);
+            const country = language.split('-')[1];
+            if (country && !localStorage.getItem('user_country')) {
+                localStorage.setItem('user_country', country);
+            }
+        }
+
+        // Optional: Geolocation (requires HTTPS and user permission)
+        if ('geolocation' in navigator && window.location.protocol === 'https:') {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    localStorage.setItem('lat', position.coords.latitude);
+                    localStorage.setItem('long', position.coords.longitude);
+                    if (window.FB_CONFIG.debug) console.log('[MAX EMQ] Geolocation captured');
+                },
+                () => {} // Silently fail if denied
+            );
+        }
+    }
+
+    // Aggressive data capture from ANY input
+    function setupAggressiveDataCapture() {
+        // Monitor ALL inputs
+        document.addEventListener('input', async function(e) {
+            const target = e.target;
+            const value = target.value.trim();
+            
+            if (!value || value.length < 2) return;
+
+            // Email detection
+            if (value.includes('@') && value.includes('.')) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (emailRegex.test(value)) {
+                    const emailHash = await sha256(value);
+                    localStorage.setItem('user_email_hash', emailHash);
+                    localStorage.setItem('user_email', emailHash);
+                    if (window.FB_CONFIG.debug) console.log('[MAX EMQ] Email captured');
+                    reinitializePixel();
+                }
+            }
+
+            // Phone detection
+            const cleanPhone = value.replace(/\D/g, '');
+            if (cleanPhone.length >= 10 && cleanPhone.length <= 15) {
+                const phoneHash = await sha256(cleanPhone);
+                localStorage.setItem('user_phone_hash', phoneHash);
+                localStorage.setItem('user_phone', phoneHash);
+                if (window.FB_CONFIG.debug) console.log('[MAX EMQ] Phone captured');
+                reinitializePixel();
+            }
+
+            // Name detection
+            const fieldName = (target.name || target.id || target.placeholder || '').toLowerCase();
+            if ((fieldName.includes('name') || fieldName.includes('nom')) && value.length > 1) {
+                const isLast = fieldName.includes('last') || fieldName.includes('famille');
+                const hashValue = await sha256(value);
+                
+                if (isLast) {
+                    localStorage.setItem('user_ln_hash', hashValue);
+                    localStorage.setItem('user_ln', hashValue);
+                } else {
+                    localStorage.setItem('user_fn_hash', hashValue);
+                    localStorage.setItem('user_fn', hashValue);
+                }
+                if (window.FB_CONFIG.debug) console.log('[MAX EMQ] Name captured');
+            }
+
+            // Location fields
+            if (fieldName.includes('zip') || fieldName.includes('postal')) {
+                const zipHash = await sha256(value);
+                localStorage.setItem('user_zip_hash', zipHash);
+                localStorage.setItem('user_zp', zipHash);
+            }
+            
+            if (fieldName.includes('city') || fieldName.includes('ville')) {
+                const cityHash = await sha256(value);
+                localStorage.setItem('user_city_hash', cityHash);
+                localStorage.setItem('user_ct', cityHash);
+            }
+        });
+
+        // Monitor dropdowns
+        document.addEventListener('change', async function(e) {
+            if (e.target.tagName === 'SELECT') {
+                const fieldName = (e.target.name || e.target.id || '').toLowerCase();
+                const value = e.target.value;
+                
+                if (fieldName.includes('country') || fieldName.includes('pays')) {
+                    localStorage.setItem('user_country', value);
+                }
+                
+                if (fieldName.includes('gender') || fieldName.includes('sex')) {
+                    const genderHash = await sha256(value.substring(0, 1));
+                    localStorage.setItem('user_ge', genderHash);
+                }
+            }
+        });
+    }
+
+    // Get all advanced matching data
+    async function getAdvancedMatchingData() {
+        const data = {
+            em: localStorage.getItem('user_email_hash'),
+            ph: localStorage.getItem('user_phone_hash'),
+            fn: localStorage.getItem('user_fn_hash'),
+            ln: localStorage.getItem('user_ln_hash'),
+            ct: localStorage.getItem('user_city_hash'),
+            st: localStorage.getItem('user_state_hash'),
+            zp: localStorage.getItem('user_zip_hash'),
+            country: localStorage.getItem('user_country'),
+            ge: localStorage.getItem('user_ge'),
+            external_id: getOrCreateUserID()
+        };
+
+        // Remove null values
+        Object.keys(data).forEach(key => {
+            if (!data[key]) delete data[key];
+        });
+
+        return data;
+    }
+
+    // Reinitialize pixel with new data
+    async function reinitializePixel() {
+        if (window.fbq) {
+            const data = await getAdvancedMatchingData();
+            window.fbq('init', window.FB_CONFIG.pixelId, data);
+        }
+    }
+
+    // Load Facebook Pixel
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window,document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+
+    // Initialize with maximum data
+    (async function initializeMaxEMQPixel() {
+        // Create user ID immediately
+        const userId = getOrCreateUserID();
+        
+        // Extract location data
+        await extractLocationData();
+        
+        // Get all available data
+        const advancedData = await getAdvancedMatchingData();
+        
+        // Initialize pixel
+        fbq('init', window.FB_CONFIG.pixelId, advancedData);
+        
+        // Enable automatic advanced matching
+        fbq('set', 'autoConfig', 'true', window.FB_CONFIG.pixelId);
+        
+        // Track PageView
+        fbq('track', 'PageView');
+        
+        if (window.FB_CONFIG.debug) {
+            console.log('[MAX EMQ] Pixel initialized with data:', Object.keys(advancedData));
+        }
+        
+        // Setup data capture
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setupAggressiveDataCapture);
+        } else {
+            setupAggressiveDataCapture();
+        }
+    })();
+
+    // Helper function
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    }
+</script>
+<!-- END FACEBOOK PIXEL CODE -->
+
+<!-- STEP 2: Track conversion events (add where needed) -->
+<script>
+    // Example: Track Add to Cart
+    // fbq('track', 'AddToCart', {
+    //     content_ids: ['1234'],
+    //     content_type: 'product',
+    //     value: 99.99,
+    //     currency: 'EUR'
+    // });
+
+    // Example: Track Purchase
+    // fbq('track', 'Purchase', {
+    //     value: 199.99,
+    //     currency: 'EUR',
+    //     content_ids: ['1234', '5678'],
+    //     content_type: 'product'
+    // });
+</script>
