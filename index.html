@@ -160,9 +160,10 @@
     </script>
 
     <script>
-      window.FB_PIXEL_ID = '1452655989058364';             // REQUIRED
-      window.CAPI_ENDPOINT = 'https://<your-worker>.workers.dev'; // REQUIRED
-      // window.FB_TEST_EVENT_CODE = 'TEST123';            // optional for Test Events
+      // Project config
+      window.FB_PIXEL_ID = '1452655989058364';
+      window.CAPI_ENDPOINT = 'https://capiworker.elhallaoui-mohamed1.workers.dev';
+      // window.FB_TEST_EVENT_CODE = 'PASTE_TEST_CODE_IF_USED'; // optional
     </script>
 
     <!-- ⚙️ Step 2: Single Facebook Pixel Loading (LOAD EXACTLY ONCE) -->
@@ -204,26 +205,23 @@
   window.fbq = async function(cmd, ev, p = {}) {
     if (cmd !== 'track') { return originalFbq.apply(this, arguments); }
 
-    // Dedupe key (browser-side)
     const eventKey = `${ev}_${JSON.stringify(p.content_ids || [])}_${p.value || 0}`;
     if (window.trackedEvents.has(eventKey)) return;
     window.trackedEvents.add(eventKey);
 
-    // Read identifiers
-    const hashedEmail = localStorage.getItem('hashedEmail');   // if your app already sets these
+    const hashedEmail = localStorage.getItem('hashedEmail');
     const hashedPhone = localStorage.getItem('hashedPhone');
     const fbc = localStorage.getItem('fbc');
     const fbp = localStorage.getItem('fbp');
 
-    // Create event ID once, use for both Pixel (eventID) and CAPI (event_id)
     const eid = p.eventID || p.event_id || genEventID();
 
-    // Send Browser Pixel (must use eventID camelCase)
+    // Browser Pixel uses eventID (camelCase)
     const browserParams = { ...p, eventID: eid };
-    delete browserParams.event_id; // ensure only eventID for Pixel
-    originalFbq(cmd, ev, browserParams);
+    delete browserParams.event_id;
+    originalFbq('track', ev, browserParams);
 
-    // Build CAPI payload
+    // CAPI payload
     try {
       const user_data = {
         ...(hashedEmail && { em: hashedEmail }),
@@ -246,9 +244,7 @@
       delete capiPayload.data[0].custom_data.event_id;
       delete capiPayload.data[0].custom_data.user_data;
 
-      const endpoint = window.CAPI_ENDPOINT;
-      if (!endpoint) { console.warn('CAPI endpoint not configured'); return; }
-
+      const endpoint = window.CAPI_ENDPOINT || 'https://capiworker.elhallaoui-mohamed1.workers.dev';
       const url = new URL(endpoint);
       if (window.FB_TEST_EVENT_CODE) url.searchParams.set('test_event_code', window.FB_TEST_EVENT_CODE);
 
