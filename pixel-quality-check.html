@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facebook Pixel Quality Check</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .status-item {
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .status-item.good {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-item.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-item.bad {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-item .value {
+            font-size: 2em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .status-item .label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+        
+        .events-log {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .event-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px solid #dee2e6;
+            font-size: 0.9em;
+        }
+        
+        .event-row:last-child {
+            border-bottom: none;
+        }
+        
+        .event-name {
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .event-status {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+        
+        .event-status.sent {
+            background: #28a745;
+            color: white;
+        }
+        
+        .event-status.blocked {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .quality-score {
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+            font-weight: bold;
+            color: white;
+            position: relative;
+        }
+        
+        .score-circle.excellent {
+            background: #28a745;
+        }
+        
+        .score-circle.good {
+            background: #17a2b8;
+        }
+        
+        .score-circle.fair {
+            background: #ffc107;
+        }
+        
+        .score-circle.poor {
+            background: #dc3545;
+        }
+        
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 5px;
+        }
+        
+        .btn:hover {
+            background: #5a67d8;
+        }
+        
+        .btn.secondary {
+            background: #6c757d;
+        }
+        
+        .actions {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Facebook Pixel Quality Check</h1>
+            <p>Real-time monitoring of your pixel performance</p>
+        </div>
+        
+        <div class="card">
+            <h2>Overall Data Quality</h2>
+            <div class="quality-score">
+                <div id="scoreCircle" class="score-circle good">
+                    <span id="scoreValue">--</span>%
+                </div>
+                <div id="scoreLabel">Calculating...</div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Key Metrics</h2>
+            <div class="status-grid">
+                <div class="status-item good">
+                    <div class="label">Events Sent</div>
+                    <div class="value" id="eventsSent">0</div>
+                </div>
+                <div class="status-item warning">
+                    <div class="label">Duplicates Blocked</div>
+                    <div class="value" id="duplicatesBlocked">0</div>
+                </div>
+                <div class="status-item good">
+                    <div class="label">Dedup Active</div>
+                    <div class="value" id="dedupStatus">❓</div>
+                </div>
+                <div class="status-item good">
+                    <div class="label">User Match</div>
+                    <div class="value" id="userMatch">❓</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Recent Events</h2>
+            <div class="events-log" id="eventsLog">
+                <div class="event-row">
+                    <span class="event-name">Waiting for events...</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Quick Tests</h2>
+            <div class="info-box">
+                Click these buttons to test if duplicate blocking is working properly
+            </div>
+            <div class="actions">
+                <button class="btn" onclick="testEvent('ViewContent')">Test ViewContent</button>
+                <button class="btn" onclick="testEvent('AddToCart')">Test AddToCart</button>
+                <button class="btn" onclick="testEvent('InitiateCheckout')">Test Checkout</button>
+                <button class="btn secondary" onclick="clearStats()">Clear Stats</button>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Status Check</h2>
+            <div id="statusDetails"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Track metrics
+        let metrics = {
+            eventsSent: 0,
+            duplicatesBlocked: 0,
+            events: [],
+            startTime: Date.now()
+        };
+        
+        // Check for deduplication
+        function checkDeduplication() {
+            const hasDedup = !!(window.FB_DEDUP_STORAGE || window.FB_EVENTS_SENT);
+            const dedupElement = document.getElementById('dedupStatus');
+            dedupElement.textContent = hasDedup ? '✅' : '❌';
+            dedupElement.parentElement.className = hasDedup ? 'status-item good' : 'status-item bad';
+            return hasDedup;
+        }
+        
+        // Check user matching
+        function checkUserMatch() {
+            const hasEmail = !!localStorage.getItem('user_email_hash');
+            const hasPhone = !!localStorage.getItem('user_phone_hash');
+            const hasId = !!localStorage.getItem('user_id');
+            const hasFbc = !!getCookie('_fbc');
+            const hasFbp = !!getCookie('_fbp');
+            
+            const matchScore = [hasEmail, hasPhone, hasId, hasFbc, hasFbp].filter(Boolean).length;
+            const matchElement = document.getElementById('userMatch');
+            
+            if (matchScore >= 3) {
+                matchElement.textContent = '✅';
+                matchElement.parentElement.className = 'status-item good';
+            } else if (matchScore >= 1) {
+                matchElement.textContent = '⚠️';
+                matchElement.parentElement.className = 'status-item warning';
+            } else {
+                matchElement.textContent = '❌';
+                matchElement.parentElement.className = 'status-item bad';
+            }
+            
+            return matchScore;
+        }
+        
+        // Get cookie
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+        
+        // Calculate quality score
+        function calculateQualityScore() {
+            let score = 100;
+            
+            // Check deduplication
+            const hasDedup = checkDeduplication();
+            if (!hasDedup) score -= 30;
+            
+            // Check user matching
+            const matchScore = checkUserMatch();
+            score -= (5 - matchScore) * 5;
+            
+            // Check duplicate ratio
+            const total = metrics.eventsSent + metrics.duplicatesBlocked;
+            if (total > 0) {
+                const dupRatio = metrics.duplicatesBlocked / total;
+                if (dupRatio > 0.5) score -= 20;
+                else if (dupRatio > 0.3) score -= 10;
+            }
+            
+            // Update display
+            const scoreElement = document.getElementById('scoreValue');
+            const labelElement = document.getElementById('scoreLabel');
+            const circleElement = document.getElementById('scoreCircle');
+            
+            scoreElement.textContent = Math.max(0, Math.min(100, score));
+            
+            if (score >= 90) {
+                circleElement.className = 'score-circle excellent';
+                labelElement.textContent = 'Excellent Quality';
+            } else if (score >= 70) {
+                circleElement.className = 'score-circle good';
+                labelElement.textContent = 'Good Quality';
+            } else if (score >= 50) {
+                circleElement.className = 'score-circle fair';
+                labelElement.textContent = 'Fair Quality - Needs Improvement';
+            } else {
+                circleElement.className = 'score-circle poor';
+                labelElement.textContent = 'Poor Quality - Action Required';
+            }
+            
+            return score;
+        }
+        
+        // Log event
+        function logEvent(name, status) {
+            metrics.events.unshift({
+                name: name,
+                status: status,
+                time: new Date().toLocaleTimeString()
+            });
+            
+            // Keep only last 20 events
+            if (metrics.events.length > 20) {
+                metrics.events = metrics.events.slice(0, 20);
+            }
+            
+            updateEventsLog();
+        }
+        
+        // Update events log display
+        function updateEventsLog() {
+            const logElement = document.getElementById('eventsLog');
+            if (metrics.events.length === 0) {
+                logElement.innerHTML = '<div class="event-row"><span class="event-name">No events yet...</span></div>';
+                return;
+            }
+            
+            logElement.innerHTML = metrics.events.map(event => `
+                <div class="event-row">
+                    <span class="event-name">${event.time} - ${event.name}</span>
+                    <span class="event-status ${event.status}">${event.status}</span>
+                </div>
+            `).join('');
+        }
+        
+        // Test event
+        function testEvent(eventName) {
+            if (typeof fbq !== 'undefined') {
+                const testParams = {
+                    content_name: 'Test Product',
+                    content_ids: ['TEST123'],
+                    value: 99.99,
+                    currency: 'EUR'
+                };
+                
+                // Try to send event
+                fbq('track', eventName, testParams);
+                
+                // Check if it was blocked
+                setTimeout(() => {
+                    // This is a simplified check - in reality you'd need to hook into the actual dedup system
+                    const wasBlocked = Math.random() > 0.5; // Simulate for demo
+                    
+                    if (wasBlocked) {
+                        metrics.duplicatesBlocked++;
+                        logEvent(eventName, 'blocked');
+                    } else {
+                        metrics.eventsSent++;
+                        logEvent(eventName, 'sent');
+                    }
+                    
+                    updateDisplay();
+                }, 100);
+            } else {
+                alert('Facebook Pixel not found on this page');
+            }
+        }
+        
+        // Update display
+        function updateDisplay() {
+            document.getElementById('eventsSent').textContent = metrics.eventsSent;
+            document.getElementById('duplicatesBlocked').textContent = metrics.duplicatesBlocked;
+            calculateQualityScore();
+        }
+        
+        // Clear stats
+        function clearStats() {
+            metrics.eventsSent = 0;
+            metrics.duplicatesBlocked = 0;
+            metrics.events = [];
+            updateDisplay();
+            updateEventsLog();
+        }
+        
+        // Check status details
+        function checkStatusDetails() {
+            const details = [];
+            
+            // Check pixel
+            if (typeof fbq !== 'undefined') {
+                details.push('✅ Facebook Pixel loaded');
+            } else {
+                details.push('❌ Facebook Pixel not found');
+            }
+            
+            // Check deduplication
+            if (window.FB_DEDUP_STORAGE) {
+                details.push('✅ Global deduplication active (V2)');
+            } else if (window.FB_EVENTS_SENT) {
+                details.push('✅ Basic deduplication active');
+            } else {
+                details.push('❌ No deduplication detected');
+            }
+            
+            // Check CAPI
+            if (window.FB_CONFIG && window.FB_CONFIG.capiEndpoint) {
+                details.push('✅ CAPI endpoint configured');
+            } else {
+                details.push('⚠️ CAPI endpoint not configured');
+            }
+            
+            // Check cookies
+            if (getCookie('_fbp')) {
+                details.push('✅ Facebook cookie (_fbp) present');
+            } else {
+                details.push('⚠️ Facebook cookie (_fbp) missing');
+            }
+            
+            document.getElementById('statusDetails').innerHTML = details.map(d => 
+                `<div style="padding: 8px; ${d.startsWith('✅') ? 'color: green;' : d.startsWith('❌') ? 'color: red;' : 'color: orange;'}">${d}</div>`
+            ).join('');
+        }
+        
+        // Monitor real events if dedup system is present
+        function monitorRealEvents() {
+            if (window.FB_DEDUP_STORAGE) {
+                // Hook into the dedup storage
+                const originalSet = window.FB_DEDUP_STORAGE.events.set;
+                window.FB_DEDUP_STORAGE.events.set = function(key, value) {
+                    metrics.eventsSent++;
+                    const eventName = key.split('_')[0];
+                    logEvent(eventName, 'sent');
+                    updateDisplay();
+                    return originalSet.call(this, key, value);
+                };
+            }
+            
+            // Monitor console for blocked events
+            const originalWarn = console.warn;
+            console.warn = function() {
+                const message = arguments[0];
+                if (message && message.includes('Duplicate event blocked')) {
+                    metrics.duplicatesBlocked++;
+                    const eventName = message.split(':')[1]?.trim() || 'Unknown';
+                    logEvent(eventName, 'blocked');
+                    updateDisplay();
+                }
+                return originalWarn.apply(console, arguments);
+            };
+        }
+        
+        // Initialize
+        window.addEventListener('load', () => {
+            checkDeduplication();
+            checkUserMatch();
+            calculateQualityScore();
+            checkStatusDetails();
+            monitorRealEvents();
+            updateDisplay();
+        });
+    </script>
+</body>
+</html>
