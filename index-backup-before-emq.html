@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hent Ar Brezel - French Tactical Apparel Landing Page</title>
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Hent Ar Brezel - French Tactical Apparel" />
+    <meta property="og:description" content="Vêtements tactiques inspirés des unités d'élite françaises. Collection Neon Units - Qualité premium, design authentique." />
+    <meta property="og:image" content="/655b4f8fbe94a9ab563f377b20e38a51_edited.jpg" />
+    <meta property="og:url" content="https://hentarbrezel.com" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Hent Ar Brezel" />
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Hent Ar Brezel - French Tactical Apparel" />
+    <meta name="twitter:description" content="Vêtements tactiques inspirés des unités d'élite françaises. Collection Neon Units - Qualité premium, design authentique." />
+    <meta name="twitter:image" content="/655b4f8fbe94a9ab563f377b20e38a51_edited.jpg" />
+
+    <!-- CRITICAL: Load deduplication override FIRST -->
+    <script src="/pixel-dedup-override.js"></script>
+    
+    <!-- Facebook Pixel Configuration -->
+    <script>
+        window.FB_CONFIG = {
+            pixelId: '1452655989058364',
+            capiEndpoint: 'https://capiworker.elhallaoui-mohamed1.workers.dev/',
+            testEventCode: '', 
+            debug: true // Enable debug to see what's happening
+        };
+    </script>
+
+    <!-- Facebook Pixel with Deduplication -->
+    <script>
+        // CRITICAL: Event deduplication to prevent flooding
+        window.FB_EVENTS_SENT = new Map();
+        window.FB_EVENTS_QUEUE = new Set();
+        
+        // Check if event was recently sent (within 5 seconds)
+        function isDuplicateEvent(eventName, params) {
+            const eventKey = `${eventName}_${JSON.stringify(params?.content_ids || '')}_${params?.value || ''}`;
+            const lastSent = window.FB_EVENTS_SENT.get(eventKey);
+            
+            if (lastSent && (Date.now() - lastSent) < 5000) {
+                console.warn('Duplicate event blocked:', eventName);
+                return true;
+            }
+            
+            window.FB_EVENTS_SENT.set(eventKey, Date.now());
+            
+            // Clean old entries
+            if (window.FB_EVENTS_SENT.size > 100) {
+                const oldestKey = window.FB_EVENTS_SENT.keys().next().value;
+                window.FB_EVENTS_SENT.delete(oldestKey);
+            }
+            
+            return false;
+        }
+
+        // Load Facebook Pixel
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window,document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        
+        // Store original fbq
+        const originalFbq = window.fbq;
+        
+        // Create wrapper with deduplication
+        window.fbq = function() {
+            const [command, eventName, params] = arguments;
+            
+            // Only check duplication for track events
+            if (command === 'track' || command === 'trackCustom') {
+                if (isDuplicateEvent(eventName, params)) {
+                    return; // Block duplicate
+                }
+                
+                // Ensure unique event ID
+                if (params && !params.eventID) {
+                    params.eventID = Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
+                }
+            }
+            
+            // Call original
+            return originalFbq.apply(this, arguments);
+        };
+        
+        // Copy properties
+        Object.keys(originalFbq).forEach(key => {
+            window.fbq[key] = originalFbq[key];
+        });
+        
+        // Initialize with Advanced Matching
+        fbq('init', window.FB_CONFIG.pixelId, {
+            em: localStorage.getItem('user_email_hash'),
+            ph: localStorage.getItem('user_phone_hash'),
+            external_id: localStorage.getItem('user_id')
+        });
+        
+        // Track PageView ONCE
+        if (!window.FB_PAGEVIEW_SENT) {
+            fbq('track', 'PageView');
+            window.FB_PAGEVIEW_SENT = true;
+        }
+    </script>
+
+    <!-- Simplified CAPI Integration -->
+    <script>
+        // Helper functions
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // Send to CAPI (already deduplicated by wrapper)
+        async function sendToCAPI(eventName, parameters = {}) {
+            if (!window.FB_CONFIG.capiEndpoint) return;
+            
+            try {
+                const payload = {
+                    event_name: eventName,
+                    event_time: Math.floor(Date.now() / 1000),
+                    event_id: parameters.eventID,
+                    action_source: 'website',
+                    event_source_url: window.location.href,
+                    user_data: {
+                        fbc: getCookie('_fbc') || localStorage.getItem('_fbc'),
+                        fbp: getCookie('_fbp') || localStorage.getItem('_fbp'),
+                        em: localStorage.getItem('user_email'),
+                        ph: localStorage.getItem('user_phone'),
+                        external_id: localStorage.getItem('user_id')
+                    },
+                    custom_data: parameters
+                };
+                
+                // Remove empty values
+                Object.keys(payload.user_data).forEach(key => {
+                    if (!payload.user_data[key]) delete payload.user_data[key];
+                });
+                
+                if (window.FB_CONFIG.testEventCode) {
+                    payload.test_event_code = window.FB_CONFIG.testEventCode;
+                }
+                
+                await fetch(window.FB_CONFIG.capiEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    keepalive: true
+                });
+            } catch (error) {
+                if (window.FB_CONFIG.debug) console.error('CAPI Error:', error);
+            }
+        }
+
+        // Override fbq to add CAPI
+        const fbqWithCAPI = window.fbq;
+        window.fbq = function() {
+            const result = fbqWithCAPI.apply(this, arguments);
+            
+            const [command, eventName, params] = arguments;
+            if ((command === 'track' || command === 'trackCustom') && eventName !== 'PageView') {
+                sendToCAPI(eventName, params);
+            }
+            
+            return result;
+        };
+        Object.keys(fbqWithCAPI).forEach(key => {
+            window.fbq[key] = fbqWithCAPI[key];
+        });
+
+        // Update user data (with rate limiting)
+        let updateTimeout;
+        window.updateUserData = async function(data) {
+            // Debounce updates to prevent flooding
+            clearTimeout(updateTimeout);
+            updateTimeout = setTimeout(async () => {
+                if (data.email) {
+                    localStorage.setItem('user_email', data.email);
+                    localStorage.setItem('user_email_hash', await sha256(data.email.toLowerCase().trim()));
+                }
+                if (data.phone) {
+                    localStorage.setItem('user_phone', data.phone);
+                    localStorage.setItem('user_phone_hash', await sha256(data.phone.replace(/\D/g, '')));
+                }
+                if (data.userId) {
+                    localStorage.setItem('user_id', data.userId);
+                }
+                
+                // Re-init with new data (but don't fire PageView again)
+                fbq('init', window.FB_CONFIG.pixelId, {
+                    em: localStorage.getItem('user_email_hash'),
+                    ph: localStorage.getItem('user_phone_hash'),
+                    external_id: localStorage.getItem('user_id')
+                });
+            }, 500); // Wait 500ms before updating
+        };
+
+        // Form capture with throttling
+        let formProcessing = false;
+        document.addEventListener('DOMContentLoaded', function() {
+            // Only capture on actual form submit, not every change
+            document.addEventListener('submit', async function(e) {
+                if (formProcessing) return;
+                formProcessing = true;
+                
+                const form = e.target;
+                const emailField = form.querySelector('input[type="email"]');
+                const phoneField = form.querySelector('input[type="tel"]');
+                
+                const data = {};
+                if (emailField?.value) data.email = emailField.value;
+                if (phoneField?.value) data.phone = phoneField.value;
+                
+                if (Object.keys(data).length > 0) {
+                    await updateUserData(data);
+                }
+                
+                // Track Lead event ONCE per form
+                if (!form.dataset.fbTracked) {
+                    fbq('track', 'Lead', { content_name: 'Form Submission' });
+                    form.dataset.fbTracked = 'true';
+                }
+                
+                setTimeout(() => { formProcessing = false; }, 1000);
+            });
+        });
+
+        // Product page tracking (ONCE per page load)
+        document.addEventListener('DOMContentLoaded', function() {
+            const productPages = {
+                '/product/price_1RYQhID3hdzeARaV86yI6lOw': {
+                    content_name: 'White Hoodie',
+                    content_ids: ['BRZ-H002'],
+                    content_type: 'product',
+                    value: 69.99,
+                    currency: 'EUR'
+                },
+                '/product/price_1RYTLJD3hdzeARaVPyImkzCS': {
+                    content_name: 'Blue Hoodie',
+                    content_ids: ['BRZ-H003'],
+                    content_type: 'product',
+                    value: 69.99,
+                    currency: 'EUR'
+                },
+                '/product/price_1RYTMiD3hdzeARaVApuZgd0K': {
+                    content_name: 'Red Hoodie',
+                    content_ids: ['BRZ-H001'],
+                    content_type: 'product',
+                    value: 69.99,
+                    currency: 'EUR'
+                },
+                '/product/price_1RYTILD3hdzeARaVLdV8GKsK': {
+                    content_name: 'Red T-Shirt',
+                    content_ids: ['BRZ-T001'],
+                    content_type: 'product',
+                    value: 39.99,
+                    currency: 'EUR'
+                },
+                '/product/price_1RYTFJD3hdzeARaV815G4LfJ': {
+                    content_name: 'White T-Shirt',
+                    content_ids: ['BRZ-T002'],
+                    content_type: 'product',
+                    value: 39.99,
+                    currency: 'EUR'
+                },
+                '/product/price_1RYTFtD3hdzeARaVFK20gVjq': {
+                    content_name: 'Blue T-Shirt',
+                    content_ids: ['BRZ-T003'],
+                    content_type: 'product',
+                    value: 39.99,
+                    currency: 'EUR'
+                }
+            };
+            
+            const currentPath = window.location.pathname;
+            const productData = productPages[currentPath];
+            
+            // Track ONCE per page load
+            if (productData && !window.FB_VIEWCONTENT_SENT) {
+                fbq('track', 'ViewContent', productData);
+                window.FB_VIEWCONTENT_SENT = true;
+            }
+        });
+
+        // Helper functions with built-in deduplication
+        window.trackAddToCart = function(productId, value, currency = 'EUR') {
+            fbq('track', 'AddToCart', {
+                content_ids: [productId],
+                content_type: 'product',
+                value: value,
+                currency: currency
+            });
+        };
+
+        window.trackPurchase = function(orderData) {
+            // Update user data if provided
+            if (orderData.customer) {
+                updateUserData(orderData.customer);
+            }
+            
+            // Track purchase (deduplication handled by wrapper)
+            fbq('track', 'Purchase', {
+                value: orderData.value,
+                currency: orderData.currency || 'EUR',
+                content_ids: orderData.productIds || [],
+                content_type: 'product',
+                order_id: orderData.orderId
+            });
+        };
+    </script>
+
+    <script type="module" crossorigin src="/assets/index-dckquwlz.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-ypvo4vrl.css">
+</head>
+<body>
+    <div id="root"></div>
+</body>
+</html>
