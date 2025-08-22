@@ -20,13 +20,16 @@
     <meta name="twitter:description" content="Vêtements tactiques inspirés des unités d'élite françaises. Collection Neon Units - Qualité premium, design authentique." />
     <meta name="twitter:image" content="/655b4f8fbe94a9ab563f377b20e38a51_edited.jpg" />
 
+    <!-- CRITICAL: Load deduplication override FIRST -->
+    <script src="/pixel-dedup-override.js"></script>
+    
     <!-- Facebook Pixel Configuration -->
     <script>
         window.FB_CONFIG = {
             pixelId: '1452655989058364',
             capiEndpoint: 'https://capiworker.elhallaoui-mohamed1.workers.dev/',
             testEventCode: '', 
-            debug: false
+            debug: true // Enable debug to see what's happening
         };
     </script>
 
