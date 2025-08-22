@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hent Ar Brezel - French Tactical Apparel Landing Page</title>
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Hent Ar Brezel - French Tactical Apparel" />
+    <meta property="og:description" content="Vêtements tactiques inspirés des unités d'élite françaises. Collection Neon Units - Qualité premium, design authentique." />
+    <meta property="og:image" content="/655b4f8fbe94a9ab563f377b20e38a51_edited.jpg" />
+    <meta property="og:url" content="https://hentarbrezel.com" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Hent Ar Brezel" />
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Hent Ar Brezel - French Tactical Apparel" />
+    <meta name="twitter:description" content="Vêtements tactiques inspirés des unités d'élite françaises. Collection Neon Units - Qualité premium, design authentique." />
+    <meta name="twitter:image" content="/655b4f8fbe94a9ab563f377b20e38a51_edited.jpg" />
+
+    <!-- CRITICAL: Load deduplication override FIRST -->
+    <script src="/pixel-dedup-override.js"></script>
+    
+    <!-- ENHANCED Facebook Pixel with Advanced Matching for HIGH EMQ Score -->
+    <script>
+        // Configuration
+        window.FB_CONFIG = {
+            pixelId: '1452655989058364',
+            capiEndpoint: 'https://capiworker.elhallaoui-mohamed1.workers.dev/',
+            testEventCode: '', 
+            debug: true
+        };
+
+        // SHA-256 hashing function for privacy compliance
+        async function sha256(message) {
+            if (!message) return null;
+            const msgBuffer = new TextEncoder().encode(message.toLowerCase().trim());
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // CAPTURE FACEBOOK CLICK ID (_fbc) FROM ADS
+        (function captureFBClickID() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const fbclid = urlParams.get('fbclid');
+            
+            if (fbclid) {
+                // Create _fbc cookie in Facebook's format: fb.1.timestamp.fbclid
+                const fbc = 'fb.1.' + Date.now() + '.' + fbclid;
+                
+                // Set cookie for 28 days (Facebook's recommendation)
+                const date = new Date();
+                date.setTime(date.getTime() + (28 * 24 * 60 * 60 * 1000));
+                document.cookie = '_fbc=' + fbc + '; expires=' + date.toUTCString() + '; path=/; domain=.hentarbrezel.com';
+                
+                // Also store in localStorage as backup
+                localStorage.setItem('_fbc', fbc);
+                
+                console.log('[EMQ Boost] Facebook Click ID captured:', fbc);
+            }
+        })();
+
+        // GET OR CREATE USER ID
+        function getOrCreateUserID() {
+            let userId = localStorage.getItem('user_id') || localStorage.getItem('external_id');
+            if (!userId) {
+                // Generate a persistent user ID
+                userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
+                localStorage.setItem('user_id', userId);
+                localStorage.setItem('external_id', userId);
+                console.log('[EMQ Boost] User ID created:', userId);
+            }
+            return userId;
+        }
+
+        // GET ADVANCED MATCHING DATA
+        async function getAdvancedMatchingData() {
+            const data = {
+                em: localStorage.getItem('user_email_hash'),
+                ph: localStorage.getItem('user_phone_hash'),
+                fn: localStorage.getItem('user_fn_hash'),
+                ln: localStorage.getItem('user_ln_hash'),
+                ct: localStorage.getItem('user_city_hash'),
+                st: localStorage.getItem('user_state_hash'),
+                zp: localStorage.getItem('user_zip_hash'),
+                country: localStorage.getItem('user_country_hash'),
+                external_id: getOrCreateUserID()
+            };
+
+            // Remove null values
+            Object.keys(data).forEach(key => {
+                if (!data[key]) delete data[key];
+            });
+
+            return data;
+        }
+
+        // ENHANCED DATA CAPTURE FROM FORMS
+        async function captureFormData() {
+            document.addEventListener('input', async function(e) {
+                const target = e.target;
+                const value = target.value.trim();
+                
+                if (!value) return;
+
+                // Email capture
+                if (target.type === 'email' || 
+                    target.name?.toLowerCase().includes('email') || 
+                    target.placeholder?.toLowerCase().includes('email')) {
+                    
+                    if (value.includes('@')) {
+                        const emailHash = await sha256(value);
+                        localStorage.setItem('user_email_hash', emailHash);
+                        localStorage.setItem('user_email', emailHash); // Backup key
+                        console.log('[EMQ Boost] Email captured and hashed');
+                        
+                        // Reinitialize pixel with new data
+                        reinitializePixel();
+                    }
+                }
+
+                // Phone capture
+                if (target.type === 'tel' || 
+                    target.name?.toLowerCase().includes('phone') || 
+                    target.name?.toLowerCase().includes('tel') ||
+                    target.placeholder?.toLowerCase().includes('phone')) {
+                    
+                    const phone = value.replace(/\D/g, '');
+                    if (phone.length >= 10) {
+                        const phoneHash = await sha256(phone);
+                        localStorage.setItem('user_phone_hash', phoneHash);
+                        localStorage.setItem('user_phone', phoneHash); // Backup key
+                        console.log('[EMQ Boost] Phone captured and hashed');
+                        
+                        // Reinitialize pixel with new data
+                        reinitializePixel();
+                    }
+                }
+
+                // First name capture
+                if (target.name?.toLowerCase().includes('first') || 
+                    target.name?.toLowerCase().includes('fname') ||
+                    target.placeholder?.toLowerCase().includes('first name')) {
+                    
+                    const fnHash = await sha256(value);
+                    localStorage.setItem('user_fn_hash', fnHash);
+                    localStorage.setItem('user_fn', fnHash); // Backup key
+                    console.log('[EMQ Boost] First name captured and hashed');
+                }
+
+                // Last name capture
+                if (target.name?.toLowerCase().includes('last') || 
+                    target.name?.toLowerCase().includes('lname') ||
+                    target.placeholder?.toLowerCase().includes('last name')) {
+                    
+                    const lnHash = await sha256(value);
+                    localStorage.setItem('user_ln_hash', lnHash);
+                    localStorage.setItem('user_ln', lnHash); // Backup key
+                    console.log('[EMQ Boost] Last name captured and hashed');
+                }
+
+                // City capture
+                if (target.name?.toLowerCase().includes('city') ||
+                    target.placeholder?.toLowerCase().includes('city')) {
+                    
+                    const cityHash = await sha256(value);
+                    localStorage.setItem('user_city_hash', cityHash);
+                    localStorage.setItem('user_ct', cityHash); // Backup key
+                }
+
+                // Zip code capture
+                if (target.name?.toLowerCase().includes('zip') || 
+                    target.name?.toLowerCase().includes('postal') ||
+                    target.placeholder?.toLowerCase().includes('zip')) {
+                    
+                    const zipHash = await sha256(value);
+                    localStorage.setItem('user_zip_hash', zipHash);
+                    localStorage.setItem('user_zp', zipHash); // Backup key
+                }
+            });
+
+            // Also capture on form submit
+            document.addEventListener('submit', async function(e) {
+                const form = e.target;
+                const formData = new FormData(form);
+                
+                // Try to capture any missed data from form submission
+                for (let [key, value] of formData.entries()) {
+                    if (key.toLowerCase().includes('email') && value.includes('@')) {
+                        const emailHash = await sha256(value);
+                        localStorage.setItem('user_email_hash', emailHash);
+                    }
+                    if (key.toLowerCase().includes('phone')) {
+                        const phone = value.replace(/\D/g, '');
+                        if (phone.length >= 10) {
+                            const phoneHash = await sha256(phone);
+                            localStorage.setItem('user_phone_hash', phoneHash);
+                        }
+                    }
+                }
+                
+                reinitializePixel();
+            });
+        }
+
+        // REINITIALIZE PIXEL WITH NEW DATA
+        async function reinitializePixel() {
+            const advancedData = await getAdvancedMatchingData();
+            if (window.fbq) {
+                window.fbq('init', window.FB_CONFIG.pixelId, advancedData);
+                console.log('[EMQ Boost] Pixel reinitialized with advanced matching data:', Object.keys(advancedData));
+            }
+        }
+
+        // DEDUPLICATION
+        window.FB_EVENTS_SENT = new Map();
+        
+        function isDuplicateEvent(eventName, params) {
+            const eventKey = `${eventName}_${JSON.stringify(params?.content_ids || '')}_${params?.value || ''}`;
+            const lastSent = window.FB_EVENTS_SENT.get(eventKey);
+            
+            if (lastSent && (Date.now() - lastSent) < 5000) {
+                console.warn('Duplicate event blocked:', eventName);
+                return true;
+            }
+            
+            window.FB_EVENTS_SENT.set(eventKey, Date.now());
+            
+            if (window.FB_EVENTS_SENT.size > 100) {
+                const oldestKey = window.FB_EVENTS_SENT.keys().next().value;
+                window.FB_EVENTS_SENT.delete(oldestKey);
+            }
+            
+            return false;
+        }
+
+        // LOAD ENHANCED FACEBOOK PIXEL
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window,document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+
+        // INITIALIZE WITH ADVANCED MATCHING
+        (async function initializeEnhancedPixel() {
+            // Get all available matching data
+            const advancedData = await getAdvancedMatchingData();
+            
+            // Initialize pixel with advanced matching
+            fbq('init', window.FB_CONFIG.pixelId, advancedData);
+            
+            // ENABLE AUTOMATIC ADVANCED MATCHING (Facebook's built-in feature)
+            fbq('set', 'autoConfig', 'true', window.FB_CONFIG.pixelId);
+            
+            // Track PageView
+            fbq('track', 'PageView');
+            
+            console.log('[EMQ Boost] Enhanced Facebook Pixel initialized with advanced matching');
+            console.log('[EMQ Boost] Data available:', Object.keys(advancedData));
+            
+            // Setup form data capture
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', captureFormData);
+            } else {
+                captureFormData();
+            }
+        })();
+
+        // ENHANCED CAPI INTEGRATION
+        async function sendToCAPI(eventName, parameters = {}) {
+            if (!window.FB_CONFIG.capiEndpoint) return;
+            
+            try {
+                const advancedData = await getAdvancedMatchingData();
+                
+                const payload = {
+                    event_name: eventName,
+                    event_time: Math.floor(Date.now() / 1000),
+                    event_id: parameters.eventID || (Date.now().toString(36) + Math.random().toString(36).substring(2, 9)),
+                    action_source: 'website',
+                    event_source_url: window.location.href,
+                    user_data: {
+                        ...advancedData,
+                        client_ip_address: 'auto', // Server will detect
+                        client_user_agent: navigator.userAgent,
+                        fbc: getCookie('_fbc') || localStorage.getItem('_fbc'),
+                        fbp: getCookie('_fbp') || localStorage.getItem('_fbp')
+                    },
+                    custom_data: parameters
+                };
+                
+                // Remove empty values
+                Object.keys(payload.user_data).forEach(key => {
+                    if (!payload.user_data[key]) delete payload.user_data[key];
+                });
+                
+                if (window.FB_CONFIG.testEventCode) {
+                    payload.test_event_code = window.FB_CONFIG.testEventCode;
+                }
+                
+                const response = await fetch(window.FB_CONFIG.capiEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('CAPI Response:', result);
+                }
+            } catch (error) {
+                console.error('CAPI Error:', error);
+            }
+        }
+
+        // Helper function to get cookie
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        // WRAP FBQ TO ADD CAPI
+        const originalFbq = window.fbq;
+        window.fbq = function() {
+            const [command, eventName, params] = arguments;
+            
+            if (command === 'track' || command === 'trackCustom') {
+                if (isDuplicateEvent(eventName, params)) {
+                    return;
+                }
+                
+                if (params && !params.eventID) {
+                    params.eventID = Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
+                }
+                
+                // Send to CAPI as well
+                if (eventName !== 'PageView') {
+                    sendToCAPI(eventName, params);
+                }
+            }
+            
+            return originalFbq.apply(this, arguments);
+        };
+        
+        Object.keys(originalFbq).forEach(key => {
+            window.fbq[key] = originalFbq[key];
+        });
+
+        // SIMULATE USER ID FOR TESTING (Remove this in production if you have real user IDs)
+        window.addEventListener('load', function() {
+            // This ensures every visitor gets a persistent ID, improving EMQ
+            getOrCreateUserID();
+            
+            // Log EMQ status
+            setTimeout(() => {
+                console.log('[EMQ Boost] Current data in localStorage:');
+                console.log('- Email hash:', !!localStorage.getItem('user_email_hash') ? 'Present' : 'Missing');
+                console.log('- Phone hash:', !!localStorage.getItem('user_phone_hash') ? 'Present' : 'Missing');
+                console.log('- User ID:', !!localStorage.getItem('user_id') ? 'Present' : 'Missing');
+                console.log('- _fbp cookie:', !!getCookie('_fbp') ? 'Present' : 'Missing');
+                console.log('- _fbc cookie:', !!getCookie('_fbc') ? 'Present' : 'Missing');
+            }, 2000);
+        });
+    </script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>
