@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Simplified Facebook Pixel</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #5a67d8;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 14px;
+        }
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Simplified Facebook Pixel Test</h1>
+        
+        <div class="test-section">
+            <h2>Configuration Check</h2>
+            <div id="config-status"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Quick Tests</h2>
+            <button onclick="testPageView()">Test PageView</button>
+            <button onclick="testViewContent()">Test ViewContent</button>
+            <button onclick="testAddToCart()">Test AddToCart</button>
+            <button onclick="testPurchase()">Test Purchase</button>
+            <button onclick="testCAPI()">Test CAPI Direct</button>
+        </div>
+
+        <div class="test-section">
+            <h2>Event Log</h2>
+            <div id="event-log"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Browser Console</h2>
+            <pre id="console-log"></pre>
+        </div>
+    </div>
+
+    <!-- Include the simplified pixel code -->
+    <script>
+        // Configuration
+        window.FB_CONFIG = {
+            pixelId: '1452655989058364',
+            capiEndpoint: 'https://capiworker.elhallaoui-mohamed1.workers.dev',
+            testEventCode: '', // Add your test event code here
+            debug: true
+        };
+
+        // Event log
+        const eventLog = [];
+        
+        function logEvent(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            eventLog.push({ timestamp, message, type });
+            updateEventLog();
+            updateConsoleLog(`[${timestamp}] ${type.toUpperCase()}: ${message}`);
+        }
+
+        function updateEventLog() {
+            const logDiv = document.getElementById('event-log');
+            logDiv.innerHTML = eventLog.slice(-10).reverse().map(e => 
+                `<div class="log-entry">
+                    <strong>${e.timestamp}</strong> 
+                    <span class="status ${e.type}">${e.message}</span>
+                </div>`
+            ).join('');
+        }
+
+        function updateConsoleLog(message) {
+            const consoleDiv = document.getElementById('console-log');
+            consoleDiv.textContent = message + '\n' + consoleDiv.textContent;
+            if (consoleDiv.textContent.split('\n').length > 20) {
+                consoleDiv.textContent = consoleDiv.textContent.split('\n').slice(0, 20).join('\n');
+            }
+        }
+
+        // Override console.log to capture output
+        const originalConsoleLog = console.log;
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            updateConsoleLog(args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg
+            ).join(' '));
+        };
+    </script>
+
+    <!-- Facebook Pixel Code -->
+    <script>
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window,document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        
+        fbq('init', window.FB_CONFIG.pixelId);
+        fbq('track', 'PageView');
+        
+        logEvent('Facebook Pixel initialized', 'success');
+    </script>
+
+    <!-- Test Functions -->
+    <script>
+        // Check configuration on load
+        window.addEventListener('load', function() {
+            const configDiv = document.getElementById('config-status');
+            const config = {
+                'Pixel ID': window.FB_CONFIG.pixelId,
+                'CAPI Endpoint': window.FB_CONFIG.capiEndpoint,
+                'Test Event Code': window.FB_CONFIG.testEventCode || 'Not set',
+                'Debug Mode': window.FB_CONFIG.debug ? 'Enabled' : 'Disabled',
+                'fbq Loaded': typeof fbq !== 'undefined' ? 'Yes' : 'No',
+                'fbq Version': window.fbq && window.fbq.version ? window.fbq.version : 'Unknown'
+            };
+            
+            let html = '<table style="width: 100%">';
+            for (const [key, value] of Object.entries(config)) {
+                html += `<tr>
+                    <td style="padding: 5px"><strong>${key}:</strong></td>
+                    <td style="padding: 5px">${value}</td>
+                </tr>`;
+            }
+            html += '</table>';
+            configDiv.innerHTML = html;
+        });
+
+        function testPageView() {
+            logEvent('Testing PageView event', 'info');
+            fbq('track', 'PageView');
+            logEvent('PageView event sent', 'success');
+        }
+
+        function testViewContent() {
+            const params = {
+                content_name: 'Test Product',
+                content_ids: ['TEST_001'],
+                content_type: 'product',
+                value: 99.99,
+                currency: 'EUR'
+            };
+            logEvent('Testing ViewContent event', 'info');
+            fbq('track', 'ViewContent', params);
+            logEvent(`ViewContent event sent: ${JSON.stringify(params)}`, 'success');
+        }
+
+        function testAddToCart() {
+            const params = {
+                content_ids: ['TEST_001'],
+                content_type: 'product',
+                value: 99.99,
+                currency: 'EUR'
+            };
+            logEvent('Testing AddToCart event', 'info');
+            fbq('track', 'AddToCart', params);
+            logEvent(`AddToCart event sent: ${JSON.stringify(params)}`, 'success');
+        }
+
+        function testPurchase() {
+            const params = {
+                content_ids: ['TEST_001', 'TEST_002'],
+                content_type: 'product',
+                value: 199.99,
+                currency: 'EUR',
+                num_items: 2
+            };
+            logEvent('Testing Purchase event', 'info');
+            fbq('track', 'Purchase', params);
+            logEvent(`Purchase event sent: ${JSON.stringify(params)}`, 'success');
+        }
+
+        async function testCAPI() {
+            logEvent('Testing direct CAPI call', 'info');
+            
+            try {
+                const payload = {
+                    event_name: 'TestEvent',
+                    event_time: Math.floor(Date.now() / 1000),
+                    event_id: Date.now().toString(36) + Math.random().toString(36).substring(2, 9),
+                    action_source: 'website',
+                    event_source_url: window.location.href,
+                    user_data: {},
+                    custom_data: {
+                        test: true,
+                        timestamp: Date.now()
+                    }
+                };
+                
+                if (window.FB_CONFIG.testEventCode) {
+                    payload.test_event_code = window.FB_CONFIG.testEventCode;
+                }
+                
+                const response = await fetch(window.FB_CONFIG.capiEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                logEvent(`CAPI Response: ${JSON.stringify(result)}`, result.success ? 'success' : 'error');
+            } catch (error) {
+                logEvent(`CAPI Error: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
