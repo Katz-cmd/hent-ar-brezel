@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facebook Pixel Diagnostic Tool</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .diagnostic-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status.success {
+            background: #28a745;
+            color: white;
+        }
+        .status.error {
+            background: #dc3545;
+            color: white;
+        }
+        .status.warning {
+            background: #ffc107;
+            color: black;
+        }
+        .status.info {
+            background: #17a2b8;
+            color: white;
+        }
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background: #5a67d8;
+        }
+        .btn.secondary {
+            background: #6c757d;
+        }
+        .btn.secondary:hover {
+            background: #5a6268;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background: #667eea;
+            color: white;
+        }
+        .fix-suggestion {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .fix-suggestion h3 {
+            color: #856404;
+            margin-top: 0;
+        }
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Facebook Pixel Diagnostic Tool</h1>
+        
+        <div class="diagnostic-section">
+            <h2>📊 Quick Status Overview</h2>
+            <div id="quickStatus"></div>
+        </div>
+
+        <div class="diagnostic-section">
+            <h2>🎯 Pixel Configuration</h2>
+            <div id="pixelConfig"></div>
+        </div>
+
+        <div class="diagnostic-section">
+            <h2>🍪 Cookie Status</h2>
+            <div id="cookieStatus"></div>
+        </div>
+
+        <div class="diagnostic-section">
+            <h2>📡 Network Requests</h2>
+            <div id="networkStatus"></div>
+        </div>
+
+        <div class="diagnostic-section">
+            <h2>🔧 Detected Issues & Fixes</h2>
+            <div id="issues"></div>
+        </div>
+
+        <div class="diagnostic-section">
+            <h2>🧪 Interactive Tests</h2>
+            <button class="btn" onclick="testPixelFire()">Test Pixel Fire</button>
+            <button class="btn" onclick="testCAPIConnection()">Test CAPI Connection</button>
+            <button class="btn" onclick="simulateAddToCart()">Simulate AddToCart Event</button>
+            <button class="btn secondary" onclick="clearStorageAndReload()">Clear Storage & Reload</button>
+            <div id="testResults"></div>
+        </div>
+
+        <div class="diagnostic-section">
+            <h2>📝 Event Log</h2>
+            <div id="eventLog"></div>
+        </div>
+    </div>
+
+    <script>
+        // Store original fbq for monitoring
+        const originalFbq = window.fbq;
+        const eventLog = [];
+        
+        // Configuration
+        const EXPECTED_PIXEL_ID = '1452655989058364';
+        const CAPI_ENDPOINT = 'https://capiworker.elhallaoui-mohamed1.workers.dev';
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toISOString();
+            eventLog.push({ timestamp, message, type });
+            updateEventLog();
+        }
+
+        function updateEventLog() {
+            const logDiv = document.getElementById('eventLog');
+            logDiv.innerHTML = '<div class="code-block">' + 
+                eventLog.slice(-10).reverse().map(e => 
+                    `[${e.timestamp}] ${e.type.toUpperCase()}: ${e.message}`
+                ).join('\n') + 
+                '</div>';
+        }
+
+        function checkPixelLoaded() {
+            const status = {
+                fbqExists: typeof window.fbq !== 'undefined',
+                fbqType: typeof window.fbq,
+                pixelIdConfigured: window.FB_PIXEL_ID === EXPECTED_PIXEL_ID,
+                pixelLibraryLoaded: window.fbPixelLoaded === true,
+                fbqQueueExists: window.fbq && window.fbq.queue !== undefined,
+                fbqVersion: window.fbq && window.fbq.version
+            };
+            
+            return status;
+        }
+
+        function checkCookies() {
+            const cookies = {};
+            document.cookie.split(';').forEach(cookie => {
+                const [name, value] = cookie.trim().split('=');
+                if (name) cookies[name] = value;
+            });
+            
+            return {
+                allCookies: cookies,
+                fbcCookie: cookies['_fbc'] || null,
+                fbpCookie: cookies['_fbp'] || null,
+                fbcInStorage: localStorage.getItem('fbc'),
+                fbpInStorage: localStorage.getItem('fbp'),
+                hashedEmail: localStorage.getItem('hashedEmail'),
+                hashedPhone: localStorage.getItem('hashedPhone'),
+                cookieEnabled: navigator.cookieEnabled,
+                thirdPartyCookiesTest: null // Will be tested async
+            };
+        }
+
+        function checkNetworkRequests() {
+            // Monitor fetch and XHR for Facebook requests
+            const fbRequests = [];
+            
+            // Override fetch
+            const originalFetch = window.fetch;
+            window.fetch = function(...args) {
+                const url = args[0];
+                if (url && (url.includes('facebook') || url.includes('fb.com') || url.includes(CAPI_ENDPOINT))) {
+                    fbRequests.push({
+                        type: 'fetch',
+                        url: url,
+                        timestamp: new Date().toISOString()
+                    });
+                    log(`Fetch request to: ${url}`, 'info');
+                }
+                return originalFetch.apply(this, args);
+            };
+            
+            return fbRequests;
+        }
+
+        async function testThirdPartyCookies() {
+            try {
+                const testUrl = 'https://www.facebook.com/tr/';
+                const response = await fetch(testUrl, { 
+                    method: 'HEAD',
+                    mode: 'no-cors',
+                    credentials: 'include'
+                });
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        async function runDiagnostics() {
+            log('Starting diagnostics...', 'info');
+            
+            // Quick Status
+            const pixelStatus = checkPixelLoaded();
+            const cookieStatus = checkCookies();
+            const thirdPartyCookiesEnabled = await testThirdPartyCookies();
+            cookieStatus.thirdPartyCookiesTest = thirdPartyCookiesEnabled;
+            
+            // Update Quick Status
+            const quickStatusDiv = document.getElementById('quickStatus');
+            quickStatusDiv.innerHTML = `
+                <table>
+                    <tr>
+                        <th>Check</th>
+                        <th>Status</th>
+                        <th>Details</th>
+                    </tr>
+                    <tr>
+                        <td>Facebook Pixel Library</td>
+                        <td><span class="status ${pixelStatus.fbqExists ? 'success' : 'error'}">${pixelStatus.fbqExists ? 'LOADED' : 'NOT LOADED'}</span></td>
+                        <td>fbq type: ${pixelStatus.fbqType}</td>
+                    </tr>
+                    <tr>
+                        <td>Pixel ID Configuration</td>
+                        <td><span class="status ${pixelStatus.pixelIdConfigured ? 'success' : 'error'}">${pixelStatus.pixelIdConfigured ? 'CORRECT' : 'INCORRECT'}</span></td>
+                        <td>Expected: ${EXPECTED_PIXEL_ID}</td>
+                    </tr>
+                    <tr>
+                        <td>Facebook Cookies</td>
+                        <td><span class="status ${(cookieStatus.fbcCookie || cookieStatus.fbpCookie) ? 'success' : 'warning'}">${(cookieStatus.fbcCookie || cookieStatus.fbpCookie) ? 'FOUND' : 'MISSING'}</span></td>
+                        <td>_fbc: ${cookieStatus.fbcCookie ? '✓' : '✗'}, _fbp: ${cookieStatus.fbpCookie ? '✓' : '✗'}</td>
+                    </tr>
+                    <tr>
+                        <td>Third-party Cookies</td>
+                        <td><span class="status ${thirdPartyCookiesEnabled ? 'success' : 'warning'}">${thirdPartyCookiesEnabled ? 'ENABLED' : 'BLOCKED'}</span></td>
+                        <td>${!thirdPartyCookiesEnabled ? 'May affect tracking accuracy' : 'Working normally'}</td>
+                    </tr>
+                    <tr>
+                        <td>CAPI Configuration</td>
+                        <td><span class="status ${window.CAPI_ENDPOINT ? 'success' : 'error'}">${window.CAPI_ENDPOINT ? 'CONFIGURED' : 'NOT CONFIGURED'}</span></td>
+                        <td>${window.CAPI_ENDPOINT || 'Not set'}</td>
+                    </tr>
+                </table>
+            `;
+            
+            // Pixel Configuration Details
+            const pixelConfigDiv = document.getElementById('pixelConfig');
+            pixelConfigDiv.innerHTML = `
+                <div class="code-block">
+{
+    "pixelId": "${window.FB_PIXEL_ID || 'NOT SET'}",
+    "capiEndpoint": "${window.CAPI_ENDPOINT || 'NOT SET'}",
+    "testEventCode": "${window.FB_TEST_EVENT_CODE || 'NOT SET'}",
+    "fbqVersion": "${pixelStatus.fbqVersion || 'UNKNOWN'}",
+    "pixelLibraryLoaded": ${pixelStatus.pixelLibraryLoaded},
+    "fbqQueueLength": ${window.fbq && window.fbq.queue ? window.fbq.queue.length : 0}
+}
+                </div>
+            `;
+            
+            // Cookie Status Details
+            const cookieStatusDiv = document.getElementById('cookieStatus');
+            cookieStatusDiv.innerHTML = `
+                <h3>Cookie Values:</h3>
+                <table>
+                    <tr><th>Cookie/Storage</th><th>Location</th><th>Value</th></tr>
+                    <tr><td>_fbc</td><td>Cookie</td><td>${cookieStatus.fbcCookie || 'Not found'}</td></tr>
+                    <tr><td>_fbp</td><td>Cookie</td><td>${cookieStatus.fbpCookie || 'Not found'}</td></tr>
+                    <tr><td>fbc</td><td>localStorage</td><td>${cookieStatus.fbcInStorage || 'Not found'}</td></tr>
+                    <tr><td>fbp</td><td>localStorage</td><td>${cookieStatus.fbpInStorage || 'Not found'}</td></tr>
+                    <tr><td>hashedEmail</td><td>localStorage</td><td>${cookieStatus.hashedEmail ? '✓ Present' : 'Not found'}</td></tr>
+                    <tr><td>hashedPhone</td><td>localStorage</td><td>${cookieStatus.hashedPhone ? '✓ Present' : 'Not found'}</td></tr>
+                </table>
+                <p><strong>Browser Cookie Support:</strong> ${cookieStatus.cookieEnabled ? '✓ Enabled' : '✗ Disabled'}</p>
+                <p><strong>All Cookies:</strong></p>
+                <div class="code-block">${JSON.stringify(cookieStatus.allCookies, null, 2)}</div>
+            `;
+            
+            // Identify Issues
+            const issues = [];
+            
+            if (!pixelStatus.fbqExists) {
+                issues.push({
+                    severity: 'error',
+                    issue: 'Facebook Pixel library not loaded',
+                    fix: 'Check if fbevents.js is being blocked by ad blockers or browser settings'
+                });
+            }
+            
+            if (!pixelStatus.pixelIdConfigured) {
+                issues.push({
+                    severity: 'error',
+                    issue: 'Pixel ID not configured correctly',
+                    fix: 'Ensure FB_PIXEL_ID is set to ' + EXPECTED_PIXEL_ID
+                });
+            }
+            
+            if (!cookieStatus.fbcCookie && !cookieStatus.fbpCookie) {
+                issues.push({
+                    severity: 'warning',
+                    issue: 'Facebook cookies not found',
+                    fix: 'This is normal for first-time visitors. Cookies will be set after pixel fires.'
+                });
+            }
+            
+            if (!thirdPartyCookiesEnabled) {
+                issues.push({
+                    severity: 'warning',
+                    issue: 'Third-party cookies may be blocked',
+                    fix: 'This can reduce tracking accuracy. CAPI helps mitigate this issue.'
+                });
+            }
+            
+            if (!window.CAPI_ENDPOINT) {
+                issues.push({
+                    severity: 'warning',
+                    issue: 'CAPI endpoint not configured',
+                    fix: 'Set up Conversions API for server-side tracking to improve accuracy'
+                });
+            }
+            
+            // Display Issues
+            const issuesDiv = document.getElementById('issues');
+            if (issues.length === 0) {
+                issuesDiv.innerHTML = '<p class="status success">No issues detected! Your pixel appears to be working correctly.</p>';
+            } else {
+                issuesDiv.innerHTML = issues.map(issue => `
+                    <div class="fix-suggestion">
+                        <h3><span class="status ${issue.severity}">${issue.severity.toUpperCase()}</span> ${issue.issue}</h3>
+                        <p><strong>Suggested Fix:</strong> ${issue.fix}</p>
+                    </div>
+                `).join('');
+            }
+            
+            log('Diagnostics complete', 'success');
+        }
+
+        // Test functions
+        async function testPixelFire() {
+            const resultDiv = document.getElementById('testResults');
+            resultDiv.innerHTML = '<p>Testing pixel fire... <span class="loader"></span></p>';
+            
+            try {
+                if (typeof fbq === 'undefined') {
+                    throw new Error('fbq is not defined');
+                }
+                
+                // Fire a test event
+                fbq('track', 'TestEvent', {
+                    test: true,
+                    timestamp: Date.now()
+                });
+                
+                resultDiv.innerHTML = '<p class="status success">Test event fired successfully! Check Facebook Events Manager.</p>';
+                log('Test pixel fire successful', 'success');
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="status error">Error: ${error.message}</p>`;
+                log(`Test pixel fire failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testCAPIConnection() {
+            const resultDiv = document.getElementById('testResults');
+            resultDiv.innerHTML = '<p>Testing CAPI connection... <span class="loader"></span></p>';
+            
+            try {
+                const testPayload = {
+                    data: [{
+                        event_name: 'TestEvent',
+                        event_time: Math.floor(Date.now() / 1000),
+                        action_source: 'website',
+                        event_source_url: window.location.href,
+                        user_data: {},
+                        custom_data: { test: true }
+                    }]
+                };
+                
+                const response = await fetch(CAPI_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testPayload)
+                });
+                
+                const result = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <p class="status ${response.ok ? 'success' : 'error'}">
+                        CAPI Response: ${response.status} ${response.statusText}
+                    </p>
+                    <div class="code-block">${JSON.stringify(result, null, 2)}</div>
+                `;
+                log(`CAPI test response: ${response.status}`, response.ok ? 'success' : 'error');
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="status error">CAPI Connection Error: ${error.message}</p>`;
+                log(`CAPI test failed: ${error.message}`, 'error');
+            }
+        }
+
+        function simulateAddToCart() {
+            const resultDiv = document.getElementById('testResults');
+            
+            try {
+                if (typeof fbq === 'undefined') {
+                    throw new Error('fbq is not defined');
+                }
+                
+                fbq('track', 'AddToCart', {
+                    content_ids: ['TEST_PRODUCT_001'],
+                    content_type: 'product',
+                    value: 99.99,
+                    currency: 'EUR'
+                });
+                
+                resultDiv.innerHTML = '<p class="status success">AddToCart event simulated! Check Events Manager and Network tab.</p>';
+                log('AddToCart event simulated', 'success');
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="status error">Error: ${error.message}</p>`;
+                log(`AddToCart simulation failed: ${error.message}`, 'error');
+            }
+        }
+
+        function clearStorageAndReload() {
+            if (confirm('This will clear all localStorage data and cookies, then reload the page. Continue?')) {
+                // Clear localStorage
+                localStorage.clear();
+                
+                // Clear cookies
+                document.cookie.split(";").forEach(function(c) { 
+                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+                });
+                
+                // Reload
+                window.location.reload();
+            }
+        }
+
+        // Monitor network requests
+        const networkRequests = checkNetworkRequests();
+        
+        // Override fbq to monitor events
+        if (window.fbq) {
+            window.fbq = new Proxy(window.fbq, {
+                apply: function(target, thisArg, argumentsList) {
+                    const [command, event, params] = argumentsList;
+                    if (command === 'track' || command === 'trackCustom') {
+                        log(`FB Event: ${command} - ${event}`, 'info');
+                        const networkDiv = document.getElementById('networkStatus');
+                        networkDiv.innerHTML = (networkDiv.innerHTML || '') + 
+                            `<div class="test-result">
+                                <strong>${new Date().toLocaleTimeString()}</strong> - 
+                                ${command}: ${event}
+                                <div class="code-block">${JSON.stringify(params || {}, null, 2)}</div>
+                            </div>`;
+                    }
+                    return target.apply(thisArg, argumentsList);
+                }
+            });
+        }
+
+        // Run diagnostics on load
+        window.addEventListener('load', () => {
+            setTimeout(runDiagnostics, 1000);
+        });
+
+        // Initial run
+        runDiagnostics();
+    </script>
+</body>
+</html>

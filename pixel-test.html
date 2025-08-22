@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facebook Pixel Simple Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1877f2;
+        }
+        .status-box {
+            background: #f0f2f5;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .warning { color: orange; font-weight: bold; }
+        button {
+            background: #1877f2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #166fe5;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Facebook Pixel Test Page</h1>
+        
+        <div class="status-box">
+            <h2>Initial Status Check</h2>
+            <div id="initial-status"></div>
+        </div>
+
+        <div class="status-box">
+            <h2>Test Controls</h2>
+            <button onclick="loadPixel()">1. Load Pixel</button>
+            <button onclick="checkPixelStatus()">2. Check Status</button>
+            <button onclick="fireTestEvent()">3. Fire Test Event</button>
+            <button onclick="fireAddToCart()">4. Fire AddToCart</button>
+            <button onclick="firePurchase()">5. Fire Purchase</button>
+        </div>
+
+        <div class="status-box">
+            <h2>Results</h2>
+            <div id="results"></div>
+        </div>
+
+        <div class="status-box">
+            <h2>Console Output</h2>
+            <pre id="console-output"></pre>
+        </div>
+    </div>
+
+    <script>
+        const PIXEL_ID = '1452655989058364';
+        let logOutput = [];
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toISOString();
+            const logMessage = `[${timestamp}] ${type.toUpperCase()}: ${message}`;
+            logOutput.push(logMessage);
+            console.log(logMessage);
+            updateConsoleOutput();
+        }
+
+        function updateConsoleOutput() {
+            document.getElementById('console-output').textContent = logOutput.join('\n');
+        }
+
+        function checkInitialStatus() {
+            const statusDiv = document.getElementById('initial-status');
+            const checks = {
+                'fbq defined': typeof window.fbq !== 'undefined',
+                'Pixel ID configured': window.FB_PIXEL_ID === PIXEL_ID,
+                'Cookies enabled': navigator.cookieEnabled,
+                'localStorage available': typeof(Storage) !== "undefined",
+                'Current domain': window.location.hostname,
+                'Protocol': window.location.protocol,
+                'Facebook cookies': document.cookie.includes('_fb')
+            };
+
+            let html = '<ul>';
+            for (const [check, result] of Object.entries(checks)) {
+                html += `<li>${check}: <span class="${result ? 'success' : 'warning'}">${result}</span></li>`;
+            }
+            html += '</ul>';
+            statusDiv.innerHTML = html;
+
+            log('Initial status checked', 'info');
+        }
+
+        function loadPixel() {
+            log('Loading Facebook Pixel...', 'info');
+            
+            if (window.fbq) {
+                log('Pixel already loaded!', 'warning');
+                return;
+            }
+
+            !function(f,b,e,v,n,t,s)
+            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+            n.queue=[];t=b.createElement(e);t.async=!0;
+            t.src=v;s=b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t,s)}(window, document,'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+
+            fbq('init', PIXEL_ID);
+            fbq('track', 'PageView');
+
+            log(`Pixel initialized with ID: ${PIXEL_ID}`, 'success');
+            
+            setTimeout(() => {
+                checkPixelStatus();
+            }, 1000);
+        }
+
+        function checkPixelStatus() {
+            const resultsDiv = document.getElementById('results');
+            
+            const status = {
+                fbqExists: typeof window.fbq !== 'undefined',
+                fbqType: typeof window.fbq,
+                fbqLoaded: window.fbq && window.fbq.loaded,
+                fbqVersion: window.fbq && window.fbq.version,
+                queueLength: window.fbq && window.fbq.queue ? window.fbq.queue.length : 0,
+                cookies: {
+                    _fbc: getCookie('_fbc'),
+                    _fbp: getCookie('_fbp')
+                }
+            };
+
+            resultsDiv.innerHTML = `
+                <h3>Pixel Status:</h3>
+                <pre>${JSON.stringify(status, null, 2)}</pre>
+            `;
+
+            log(`Status check: fbq ${status.fbqExists ? 'exists' : 'missing'}`, status.fbqExists ? 'success' : 'error');
+        }
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        function fireTestEvent() {
+            if (typeof fbq === 'undefined') {
+                log('fbq not loaded! Load pixel first.', 'error');
+                return;
+            }
+
+            try {
+                fbq('track', 'TestEvent', {
+                    test_parameter: 'test_value',
+                    timestamp: Date.now()
+                });
+                log('TestEvent fired successfully', 'success');
+            } catch (error) {
+                log(`Error firing TestEvent: ${error.message}`, 'error');
+            }
+        }
+
+        function fireAddToCart() {
+            if (typeof fbq === 'undefined') {
+                log('fbq not loaded! Load pixel first.', 'error');
+                return;
+            }
+
+            try {
+                fbq('track', 'AddToCart', {
+                    content_ids: ['PROD_001'],
+                    content_type: 'product',
+                    value: 49.99,
+                    currency: 'EUR'
+                });
+                log('AddToCart event fired successfully', 'success');
+            } catch (error) {
+                log(`Error firing AddToCart: ${error.message}`, 'error');
+            }
+        }
+
+        function firePurchase() {
+            if (typeof fbq === 'undefined') {
+                log('fbq not loaded! Load pixel first.', 'error');
+                return;
+            }
+
+            try {
+                fbq('track', 'Purchase', {
+                    content_ids: ['PROD_001', 'PROD_002'],
+                    content_type: 'product',
+                    value: 99.99,
+                    currency: 'EUR',
+                    num_items: 2
+                });
+                log('Purchase event fired successfully', 'success');
+            } catch (error) {
+                log(`Error firing Purchase: ${error.message}`, 'error');
+            }
+        }
+
+        // Check initial status on load
+        window.addEventListener('load', checkInitialStatus);
+    </script>
+</body>
+</html>
