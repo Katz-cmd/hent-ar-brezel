@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facebook Pixel Installation Test</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 28px;
+        }
+        .config-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            margin: 10px 0;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #218838; }
+        .status {
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.info { background: #d1ecf1; color: #0c5460; }
+        .status.warning { background: #fff3cd; color: #856404; }
+        .test-results {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        .test-item {
+            padding: 10px;
+            margin: 10px 0;
+            background: white;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .test-icon {
+            font-size: 20px;
+            margin-right: 10px;
+        }
+        .link-box {
+            background: #e8f4fd;
+            border: 2px solid #b8daff;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .link-box a {
+            color: #004085;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        .link-box a:hover {
+            text-decoration: underline;
+        }
+        .code-display {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Facebook Pixel Installation Test</h1>
+        
+        <div class="config-section">
+            <h2>⚙️ Configuration</h2>
+            <div class="input-group">
+                <label>Facebook Pixel ID</label>
+                <input type="text" id="pixelId" placeholder="e.g., 1234567890123456">
+            </div>
+            <div class="input-group">
+                <label>Cloudflare Worker URL</label>
+                <input type="text" id="workerUrl" placeholder="https://your-worker.workers.dev">
+            </div>
+            <div class="input-group">
+                <label>Test Event Code (Optional)</label>
+                <input type="text" id="testCode" placeholder="e.g., TEST12345">
+            </div>
+            <button class="btn" onclick="saveConfig()">💾 Save Configuration</button>
+        </div>
+
+        <button class="btn btn-success" onclick="runTest()" id="testBtn">
+            🚀 Run Installation Test
+        </button>
+
+        <div id="status"></div>
+
+        <div id="results" style="display:none;">
+            <div class="test-results">
+                <h3>Test Results:</h3>
+                <div class="test-item">
+                    <span><span class="test-icon" id="icon1">⏺️</span> Browser Pixel Loaded</span>
+                    <span id="result1">Pending...</span>
+                </div>
+                <div class="test-item">
+                    <span><span class="test-icon" id="icon2">⏺️</span> CAPI Worker Connected</span>
+                    <span id="result2">Pending...</span>
+                </div>
+                <div class="test-item">
+                    <span><span class="test-icon" id="icon3">⏺️</span> Facebook API Response</span>
+                    <span id="result3">Pending...</span>
+                </div>
+                <div class="test-item">
+                    <span><span class="test-icon" id="icon4">⏺️</span> Test Event Sent</span>
+                    <span id="result4">Pending...</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="link-box">
+            <strong>After testing, check your events here:</strong><br>
+            <a href="https://business.facebook.com/events_manager/test_events" target="_blank">
+                Facebook Test Events →
+            </a>
+        </div>
+
+        <div id="debug" style="display:none;">
+            <h3>Debug Information:</h3>
+            <div class="code-display" id="debugInfo"></div>
+        </div>
+    </div>
+
+    <script>
+        // Load saved configuration
+        document.getElementById('pixelId').value = localStorage.getItem('test_pixelId') || '';
+        document.getElementById('workerUrl').value = localStorage.getItem('test_workerUrl') || '';
+        document.getElementById('testCode').value = localStorage.getItem('test_testCode') || '';
+
+        function saveConfig() {
+            const pixelId = document.getElementById('pixelId').value;
+            const workerUrl = document.getElementById('workerUrl').value;
+            const testCode = document.getElementById('testCode').value;
+            
+            if (!pixelId || !workerUrl) {
+                showStatus('Please enter both Pixel ID and Worker URL', 'error');
+                return;
+            }
+            
+            localStorage.setItem('test_pixelId', pixelId);
+            localStorage.setItem('test_workerUrl', workerUrl);
+            localStorage.setItem('test_testCode', testCode);
+            
+            // Update configuration
+            window.FB_CONFIG = {
+                pixelId: pixelId,
+                capiEndpoint: workerUrl,
+                testEventCode: testCode,
+                debug: true
+            };
+            
+            // Load Facebook Pixel
+            if (!window.fbq) {
+                !function(f,b,e,v,n,t,s)
+                {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+                n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+                if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+                n.queue=[];t=b.createElement(e);t.async=!0;
+                t.src=v;s=b.getElementsByTagName(e)[0];
+                s.parentNode.insertBefore(t,s)}(window,document,'script',
+                'https://connect.facebook.net/en_US/fbevents.js');
+                
+                fbq('init', pixelId);
+            }
+            
+            showStatus('Configuration saved! Now run the test.', 'success');
+        }
+
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = 'status ' + type;
+            statusDiv.textContent = message;
+            statusDiv.style.display = 'block';
+        }
+
+        async function runTest() {
+            const pixelId = document.getElementById('pixelId').value;
+            const workerUrl = document.getElementById('workerUrl').value;
+            const testCode = document.getElementById('testCode').value;
+            
+            if (!pixelId || !workerUrl) {
+                showStatus('Please configure Pixel ID and Worker URL first', 'error');
+                return;
+            }
+            
+            // Save and apply config
+            saveConfig();
+            
+            // Show results section
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('debug').style.display = 'block';
+            document.getElementById('testBtn').disabled = true;
+            showStatus('Running tests...', 'info');
+            
+            let debugInfo = [];
+            let allPassed = true;
+            
+            // Test 1: Check if Facebook Pixel is loaded
+            const pixelLoaded = typeof fbq !== 'undefined' && fbq.loaded;
+            updateTestResult(1, pixelLoaded, pixelLoaded ? 'Loaded' : 'Not Loaded');
+            debugInfo.push(`Pixel Loaded: ${pixelLoaded}`);
+            if (!pixelLoaded) allPassed = false;
+            
+            // Test 2-4: Test CAPI Worker
+            try {
+                const testPayload = {
+                    event_name: 'TestInstallation',
+                    event_time: Math.floor(Date.now() / 1000),
+                    event_id: Date.now().toString(36) + Math.random().toString(36).substring(2, 9),
+                    action_source: 'website',
+                    event_source_url: window.location.href,
+                    user_data: {
+                        em: 'test@example.com',
+                        ph: '+1234567890'
+                    },
+                    custom_data: {
+                        test: true,
+                        value: 123.45,
+                        currency: 'USD'
+                    }
+                };
+                
+                if (testCode) {
+                    testPayload.test_event_code = testCode;
+                }
+                
+                const response = await fetch(workerUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testPayload)
+                });
+                
+                const result = await response.json();
+                
+                // Test 2: Worker connection
+                updateTestResult(2, response.ok, response.ok ? 'Connected' : 'Failed');
+                debugInfo.push(`Worker Response: ${response.status}`);
+                if (!response.ok) allPassed = false;
+                
+                // Test 3: Facebook API response
+                const fbSuccess = result.success && result.fb_response && result.fb_response.events_received > 0;
+                updateTestResult(3, fbSuccess, fbSuccess ? 'Success' : 'Failed');
+                debugInfo.push(`Facebook API: ${fbSuccess ? 'OK' : 'Failed'}`);
+                if (!fbSuccess) allPassed = false;
+                
+                // Test 4: Send actual test event
+                if (pixelLoaded && response.ok) {
+                    fbq('track', 'Purchase', {
+                        value: 99.99,
+                        currency: 'USD',
+                        content_ids: ['TEST_PRODUCT'],
+                        eventID: testPayload.event_id
+                    });
+                    updateTestResult(4, true, 'Sent');
+                    debugInfo.push('Test Purchase Event: Sent');
+                } else {
+                    updateTestResult(4, false, 'Skipped');
+                    debugInfo.push('Test Purchase Event: Skipped');
+                    allPassed = false;
+                }
+                
+                // Add response details to debug
+                debugInfo.push('\nWorker Response:');
+                debugInfo.push(JSON.stringify(result, null, 2));
+                
+            } catch (error) {
+                updateTestResult(2, false, 'Network Error');
+                updateTestResult(3, false, 'N/A');
+                updateTestResult(4, false, 'Failed');
+                debugInfo.push(`Error: ${error.message}`);
+                allPassed = false;
+            }
+            
+            // Update debug display
+            document.getElementById('debugInfo').textContent = debugInfo.join('\n');
+            
+            // Final status
+            if (allPassed) {
+                showStatus('✅ All tests passed! Check Facebook Events Manager now.', 'success');
+            } else {
+                showStatus('⚠️ Some tests failed. Check the results above.', 'warning');
+            }
+            
+            document.getElementById('testBtn').disabled = false;
+        }
+
+        function updateTestResult(testNum, success, message) {
+            document.getElementById(`icon${testNum}`).textContent = success ? '✅' : '❌';
+            document.getElementById(`result${testNum}`).textContent = message;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!-- 
+    Facebook Pixel + Conversions API (CAPI) Integration
+    Version: 1.0.0
+    
+    INSTALLATION INSTRUCTIONS:
+    1. Update the configuration values below
+    2. Copy this ENTIRE code block
+    3. Paste into your website's <head> section
+    4. Test using Facebook Events Manager
+-->
+
+<!-- Facebook Pixel Configuration -->
+<script>
+    // ⚙️ CONFIGURATION - UPDATE THESE VALUES
+    window.FB_CONFIG = {
+        pixelId: 'YOUR_PIXEL_ID_HERE',                    // Replace with your Facebook Pixel ID
+        capiEndpoint: 'YOUR_WORKER_URL_HERE',             // Replace with your Cloudflare Worker URL
+        testEventCode: '',                                 // Add test code for testing, leave empty for production
+        debug: false                                       // Set to true to see console logs
+    };
+</script>
+
+<!-- Facebook Pixel Base Code -->
+<script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window,document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    
+    // Initialize Facebook Pixel
+    fbq('init', window.FB_CONFIG.pixelId);
+    fbq('track', 'PageView');
+    
+    if (window.FB_CONFIG.debug) {
+        console.log('Facebook Pixel initialized with ID:', window.FB_CONFIG.pixelId);
+    }
+</script>
+
+<!-- Enhanced Tracking with CAPI Support -->
+<script>
+    (function() {
+        // Helper function to get cookie value
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        // Generate unique event ID for deduplication
+        function generateEventId() {
+            return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
+        }
+
+        // Store original fbq function
+        const originalFbq = window.fbq;
+        
+        // Enhanced fbq wrapper for CAPI support
+        window.fbq = function() {
+            // Call original fbq
+            originalFbq.apply(this, arguments);
+            
+            // If it's a track event, also send to CAPI
+            if ((arguments[0] === 'track' || arguments[0] === 'trackCustom') && window.FB_CONFIG.capiEndpoint) {
+                sendToCAPI(arguments[0], arguments[1], arguments[2]);
+            }
+        };
+        
+        // Copy original fbq properties
+        Object.keys(originalFbq).forEach(key => {
+            window.fbq[key] = originalFbq[key];
+        });
+
+        // Send event to Conversions API
+        async function sendToCAPI(command, eventName, parameters = {}) {
+            if (!window.FB_CONFIG.capiEndpoint) return;
+            
+            try {
+                // Get Facebook cookies
+                const fbc = getCookie('_fbc') || localStorage.getItem('_fbc');
+                const fbp = getCookie('_fbp') || localStorage.getItem('_fbp');
+                
+                // Store cookies in localStorage for persistence
+                if (fbc) localStorage.setItem('_fbc', fbc);
+                if (fbp) localStorage.setItem('_fbp', fbp);
+                
+                // Get user data from localStorage (if available)
+                const userData = {
+                    fbc: fbc,
+                    fbp: fbp,
+                    em: localStorage.getItem('user_email'),        // Email (will be hashed by worker)
+                    ph: localStorage.getItem('user_phone'),        // Phone (will be hashed by worker)
+                    external_id: localStorage.getItem('user_id')   // External ID (will be hashed by worker)
+                };
+                
+                // Remove empty values
+                Object.keys(userData).forEach(key => {
+                    if (!userData[key]) delete userData[key];
+                });
+                
+                // Build event payload
+                const eventId = parameters.eventID || generateEventId();
+                const payload = {
+                    event_name: eventName,
+                    event_time: Math.floor(Date.now() / 1000),
+                    event_id: eventId,
+                    action_source: 'website',
+                    event_source_url: window.location.href,
+                    user_data: userData,
+                    custom_data: parameters || {}
+                };
+                
+                // Remove eventID from custom_data (it's already in event_id)
+                delete payload.custom_data.eventID;
+                
+                // Add test event code if configured
+                if (window.FB_CONFIG.testEventCode) {
+                    payload.test_event_code = window.FB_CONFIG.testEventCode;
+                }
+                
+                // Send to CAPI worker
+                const response = await fetch(window.FB_CONFIG.capiEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                    keepalive: true // Ensure request completes even if page unloads
+                });
+                
+                if (window.FB_CONFIG.debug) {
+                    const result = await response.json();
+                    console.log('CAPI Response for', eventName, ':', result);
+                }
+            } catch (error) {
+                if (window.FB_CONFIG.debug) {
+                    console.error('CAPI Error:', error);
+                }
+            }
+        }
+
+        // Helper function to update user data
+        window.updateUserData = function(email, phone, userId) {
+            // Store user data for enhanced matching
+            // Note: In production, you should hash this data before storing
+            if (email) localStorage.setItem('user_email', email);
+            if (phone) localStorage.setItem('user_phone', phone);
+            if (userId) localStorage.setItem('user_id', userId);
+            
+            if (window.FB_CONFIG.debug) {
+                console.log('User data updated for enhanced matching');
+            }
+        };
+
+        // Helper function to track custom events
+        window.trackCustomEvent = function(eventName, parameters = {}) {
+            fbq('trackCustom', eventName, parameters);
+            
+            if (window.FB_CONFIG.debug) {
+                console.log('Custom event tracked:', eventName, parameters);
+            }
+        };
+
+        // Auto-track common e-commerce events if data attributes are present
+        document.addEventListener('DOMContentLoaded', function() {
+            // Track View Content for product pages
+            const productData = document.querySelector('[data-fb-product]');
+            if (productData) {
+                const data = JSON.parse(productData.getAttribute('data-fb-product'));
+                fbq('track', 'ViewContent', data);
+            }
+            
+            // Track Add to Cart button clicks
+            document.addEventListener('click', function(e) {
+                const button = e.target.closest('[data-fb-add-to-cart]');
+                if (button) {
+                    const data = JSON.parse(button.getAttribute('data-fb-add-to-cart'));
+                    fbq('track', 'AddToCart', data);
+                }
+            });
+            
+            // Track form submissions as leads
+            document.addEventListener('submit', function(e) {
+                const form = e.target.closest('[data-fb-lead-form]');
+                if (form) {
+                    const data = JSON.parse(form.getAttribute('data-fb-lead-form') || '{}');
+                    fbq('track', 'Lead', data);
+                }
+            });
+        });
+
+        // Log initialization status
+        if (window.FB_CONFIG.debug) {
+            console.log('Facebook Pixel + CAPI initialized successfully');
+            console.log('Configuration:', {
+                pixelId: window.FB_CONFIG.pixelId,
+                capiEndpoint: window.FB_CONFIG.capiEndpoint ? 'Configured' : 'Not configured',
+                testMode: window.FB_CONFIG.testEventCode ? 'Enabled' : 'Disabled'
+            });
+        }
+    })();
+</script>
+
+<!-- 
+    USAGE EXAMPLES:
+    
+    1. Track ViewContent on product pages:
+    <div data-fb-product='{"value": 99.99, "currency": "USD", "content_ids": ["PROD_123"], "content_type": "product"}'></div>
+    
+    2. Track AddToCart on buttons:
+    <button data-fb-add-to-cart='{"value": 99.99, "currency": "USD", "content_ids": ["PROD_123"], "content_type": "product"}'>
+        Add to Cart
+    </button>
+    
+    3. Track Lead on forms:
+    <form data-fb-lead-form='{"value": 0, "currency": "USD"}'>
+        ...
+    </form>
+    
+    4. Track custom events programmatically:
+    <script>
+        fbq('track', 'Purchase', {
+            value: 199.99,
+            currency: 'USD',
+            content_ids: ['PROD_123', 'PROD_456'],
+            content_type: 'product',
+            num_items: 2
+        });
+    </script>
+    
+    5. Update user data for better matching:
+    <script>
+        updateUserData('user@email.com', '+1234567890', 'USER_123');
+    </script>
+-->
+
+<noscript>
+    <img height="1" width="1" style="display:none"
+         src="https://www.facebook.com/tr?id=YOUR_PIXEL_ID_HERE&ev=PageView&noscript=1"/>
+</noscript>
