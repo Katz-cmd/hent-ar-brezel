@@ -168,7 +168,7 @@
     <!-- ⚙️ Step 2: Single Facebook Pixel Loading (LOAD EXACTLY ONCE) -->
     <script>
 (function(w, d){
-  if (w.fbPixelLoaded) return;
+  if (w.fbPixelLoaded || w.__FB_WRAPPED__) return;
   w.fbPixelLoaded = true;
 
   // load base pixel script once
